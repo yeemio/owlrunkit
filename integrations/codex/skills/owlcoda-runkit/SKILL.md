@@ -1,7 +1,7 @@
 ---
 name: owlcoda-runkit
 description: Run receipt-backed, project-owned work with OwlCoda RunKit. Use when Codex needs to coordinate a large multi-Agent project, show per-Agent progress, manage dependencies or decisions, atomically return failed work for evidence-linked rework, import an external DeliveryPacket from a frozen target worktree, record intentionally deferred verification without repeating covered tests, hand work to another Agent, recover a blank-session next action, initialize or inspect `.owlcoda/runkit/`, plan bounded work with engine pins and leases, capture exact verification evidence, close an execution, produce a ready-for-commit receipt, or perform a read-only foreign-project shadow without widening Git or release authority.
-version: 0.23.0
+version: 0.23.1
 metadata:
   openclaw:
     requires:
@@ -16,7 +16,8 @@ metadata:
 Licensing: this skill package is MIT-0. The `owlrunkit` CLI it invokes is a
 separate work under GPL-3.0-or-later. See the `LICENSE` file in this directory.
 
-Current Core identity: `owlrunkit@0.23.0` (Contract `0.2`). Older version
+Skill package version `0.23.1` is a marketplace metadata revision only. Current
+Core identity remains `owlrunkit@0.23.0` (Contract `0.2`). Older version
 numbers appearing in `references/` — including `0.18.3` — are historical
 compatibility notes and do not describe the current Core.
 
