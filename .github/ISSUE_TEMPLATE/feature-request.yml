@@ -1,0 +1,47 @@
+name: Feature request
+description: Propose a bounded product or contract improvement
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Real workflow problem
+      description: Describe the observed delivery failure or friction, not only a proposed command.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Dogfood evidence
+      description: What happened in a real project, and what was the cost or risk?
+    validations:
+      required: true
+  - type: dropdown
+    id: boundary
+    attributes:
+      label: Primary RunKit boundary
+      options:
+        - Continuity / Project Driver
+        - Assurance / Quick or Formal
+        - Candidate and receipt identity
+        - Handoff, rework, or recovery
+        - Delivery lifecycle
+        - CLI and onboarding
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Observable acceptance criteria
+    validations:
+      required: true
+  - type: checkboxes
+    id: authority
+    attributes:
+      label: Authority boundary
+      options:
+        - label: This proposal does not assume RunKit can grant Git, release, deployment, production, automation, money, or business authority.
+          required: true

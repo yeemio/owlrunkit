@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a reproducible OwlRunKit defect
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Please remove credentials, private source, and business data from all evidence.
+  - type: input
+    id: version
+    attributes:
+      label: OwlRunKit version
+      placeholder: 0.23.0
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: 22.x
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Exact project-local command
+      description: Prefer the npx --no-install command that reproduced the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and safe evidence
+    validations:
+      required: true
+  - type: checkboxes
+    id: mutation
+    attributes:
+      label: Observed state changes
+      options:
+        - label: Workspace changed
+        - label: External runtime changed
+        - label: RunKit control state changed
+        - label: No state changed
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, private source, and personal or business data.
+          required: true

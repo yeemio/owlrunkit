@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/trust/canonical-candidate-identity-v1.schema.json",
+  "title": "OwlCoda RunKit Canonical Candidate Identity V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "manifestAlgorithmId",
+    "workspaceRoot",
+    "headCommit",
+    "trackedTree",
+    "gitVersion",
+    "discoveryCommand",
+    "discoveryEnvironment",
+    "ledger",
+    "ledgerByteLength",
+    "ledgerSha256",
+    "transportDiff",
+    "candidateFingerprint",
+    "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitCanonicalCandidateIdentityV1" },
+    "manifestAlgorithmId": { "const": "owlcoda-canonical-candidate-ledger-v1" },
+    "workspaceRoot": { "type": "string", "minLength": 1 },
+    "headCommit": { "$ref": "#/$defs/gitObject" },
+    "trackedTree": { "$ref": "#/$defs/gitObject" },
+    "gitVersion": { "type": "string", "minLength": 1 },
+    "discoveryCommand": {
+      "const": [
+        "git", "-c", "color.ui=false", "-c", "core.abbrev=40",
+        "status", "--porcelain=v1", "-z", "--untracked-files=all"
+      ]
+    },
+    "discoveryEnvironment": {
+      "const": {
+        "GIT_OPTIONAL_LOCKS": "0",
+        "LC_ALL": "C"
+      }
+    },
+    "ledger": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ledgerEntry" }
+    },
+    "ledgerByteLength": { "type": "integer", "minimum": 2 },
+    "ledgerSha256": { "$ref": "#/$defs/hash" },
+    "transportDiff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exactArgv", "environment", "sizeBytes", "sha256", "identityRole"],
+      "properties": {
+        "exactArgv": {
+          "const": [
+            "git", "-c", "color.ui=false", "-c", "core.abbrev=40",
+            "diff", "--full-index", "--binary", "--no-ext-diff", "--no-textconv", "HEAD"
+          ]
+        },
+        "environment": {
+          "const": {
+            "GIT_OPTIONAL_LOCKS": "0",
+            "LC_ALL": "C"
+          }
+        },
+        "sizeBytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "identityRole": { "const": "transport_only" }
+      }
+    },
+    "candidateFingerprint": { "$ref": "#/$defs/hash" },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "gitObject": { "type": "string", "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$" },
+    "safePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)(?!.*\\u0000).+$"
+    },
+    "ledgerEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "previousPath", "operation", "status", "kind", "mode", "sizeBytes", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/safePath" },
+        "previousPath": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/safePath" }
+          ]
+        },
+        "operation": { "enum": ["added", "copied", "deleted", "modified", "renamed"] },
+        "status": { "type": "string", "minLength": 2, "maxLength": 2 },
+        "kind": {
+          "oneOf": [
+            { "type": "null" },
+            { "enum": ["file", "gitlink", "symlink"] }
+          ]
+        },
+        "mode": { "type": ["integer", "null"], "minimum": 0, "maximum": 511 },
+        "sizeBytes": { "type": ["integer", "null"], "minimum": 0 },
+        "sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/hash" }
+          ]
+        }
+      }
+    }
+  }
+}

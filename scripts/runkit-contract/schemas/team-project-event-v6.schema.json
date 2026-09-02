@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-project-event-v6.schema.json",
+  "title": "OwlCoda RunKit Team Project Event V6",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "eventId", "type", "occurredAt", "reconciliationId",
+        "gateId", "title", "requiredFor", "gateStatus", "ownerAgentId",
+        "sourceAdapterId", "sourceRef", "sourceSha256", "summary",
+        "evidenceRefs", "authorizationGranted"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitTeamProjectEventV6" },
+        "eventId": { "$ref": "#/$defs/id" },
+        "type": { "const": "external_gate_reconciled" },
+        "occurredAt": { "$ref": "#/$defs/timestamp" },
+        "reconciliationId": { "$ref": "#/$defs/id" },
+        "supersedesReconciliationId": { "$ref": "#/$defs/id" },
+        "gateId": { "$ref": "#/$defs/id" },
+        "title": { "$ref": "#/$defs/text" },
+        "requiredFor": { "$ref": "#/$defs/stage" },
+        "gateStatus": { "enum": ["pending", "passed", "blocked", "deferred"] },
+        "ownerAgentId": { "$ref": "#/$defs/id" },
+        "sourceAdapterId": { "$ref": "#/$defs/id" },
+        "sourceRef": { "$ref": "#/$defs/text" },
+        "sourceSha256": { "$ref": "#/$defs/sha256" },
+        "summary": { "$ref": "#/$defs/text" },
+        "evidenceRefs": { "$ref": "#/$defs/nonemptyStrings" },
+        "authorizationGranted": { "const": false }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "eventId", "type", "occurredAt", "recordId",
+        "stage", "stageStatus", "ownerAgentId", "summary", "evidenceRefs",
+        "externalGateIds", "authorizationGranted"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitTeamProjectEventV6" },
+        "eventId": { "$ref": "#/$defs/id" },
+        "type": { "const": "delivery_lifecycle_recorded" },
+        "occurredAt": { "$ref": "#/$defs/timestamp" },
+        "recordId": { "$ref": "#/$defs/id" },
+        "supersedesRecordId": { "$ref": "#/$defs/id" },
+        "stage": { "$ref": "#/$defs/stage" },
+        "stageStatus": {
+          "enum": [
+            "accepted", "rejected", "integrated", "materialized", "deployed", "failed",
+            "rolled_back", "passed", "deferred"
+          ]
+        },
+        "ownerAgentId": { "$ref": "#/$defs/id" },
+        "summary": { "$ref": "#/$defs/text" },
+        "evidenceRefs": { "$ref": "#/$defs/nonemptyStrings" },
+        "externalGateIds": { "$ref": "#/$defs/strings" },
+        "authorizationGranted": { "const": false }
+      },
+      "allOf": [
+        { "if": { "properties": { "stage": { "const": "source" } }, "required": ["stage"] }, "then": { "properties": { "stageStatus": { "enum": ["accepted", "rejected"] } } } },
+        { "if": { "properties": { "stage": { "const": "integration" } }, "required": ["stage"] }, "then": { "properties": { "stageStatus": { "enum": ["integrated", "rejected"] } } } },
+        { "if": { "properties": { "stage": { "const": "materialization" } }, "required": ["stage"] }, "then": { "properties": { "stageStatus": { "enum": ["materialized", "failed"] } } } },
+        { "if": { "properties": { "stage": { "const": "deployment" } }, "required": ["stage"] }, "then": { "properties": { "stageStatus": { "enum": ["deployed", "failed", "rolled_back"] } } } },
+        { "if": { "properties": { "stage": { "const": "live_readback" } }, "required": ["stage"] }, "then": { "properties": { "stageStatus": { "enum": ["passed", "failed"] } } } },
+        { "if": { "properties": { "stage": { "const": "product_acceptance" } }, "required": ["stage"] }, "then": { "properties": { "stageStatus": { "enum": ["accepted", "rejected", "deferred"] } } } }
+      ]
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "text": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$" },
+    "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "stage": { "enum": ["source", "integration", "materialization", "deployment", "live_readback", "product_acceptance"] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "nonemptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } }
+  }
+}

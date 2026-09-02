@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/profile-reconcile-receipt-v1.json",
+  "title": "OwlCoda RunKit Profiles Reconcile Receipt V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "exitCode", "writesPerformed", "dryRun", "reconcileSha256", "detectionSha256", "beforeProfilesSha256", "appliedProfilesSha256", "addedProfileIds", "updatedProfiles", "receiptPath", "issueCodes", "authorizationGranted"],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitProfilesReconcileReceiptV1" },
+    "status": { "const": "profiles_reconciled" },
+    "exitCode": { "const": 0 },
+    "writesPerformed": { "const": 2 },
+    "dryRun": { "const": false },
+    "reconcileSha256": { "$ref": "#/$defs/hash" },
+    "detectionSha256": { "$ref": "#/$defs/hash" },
+    "beforeProfilesSha256": { "$ref": "#/$defs/hash" },
+    "appliedProfilesSha256": { "$ref": "#/$defs/hash" },
+    "addedProfileIds": { "$ref": "#/$defs/strings" },
+    "updatedProfiles": { "type": "array", "items": { "$ref": "#/$defs/update" } },
+    "receiptPath": { "type": "string", "pattern": "^\\.owlcoda/runkit/profile-reconcile-receipts/[a-f0-9]{64}\\.json$" },
+    "issueCodes": { "$ref": "#/$defs/strings" },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "update": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "addedPaths", "addedCommandIds", "updatedCommandIds"],
+      "properties": {
+        "profileId": { "type": "string", "minLength": 1 },
+        "addedPaths": { "$ref": "#/$defs/strings" },
+        "addedCommandIds": { "$ref": "#/$defs/strings" },
+        "updatedCommandIds": { "$ref": "#/$defs/strings" }
+      }
+    }
+  },
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitProfilesReconcileReceiptV1",
+    "status": "profiles_reconciled",
+    "exitCode": 0,
+    "writesPerformed": 2,
+    "dryRun": false,
+    "reconcileSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "detectionSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "beforeProfilesSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "appliedProfilesSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "addedProfileIds": [],
+    "updatedProfiles": [{
+      "profileId": "node-quality",
+      "addedPaths": ["package.json"],
+      "addedCommandIds": ["npm-test"],
+      "updatedCommandIds": []
+    }],
+    "receiptPath": ".owlcoda/runkit/profile-reconcile-receipts/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json",
+    "issueCodes": [],
+    "authorizationGranted": false
+  }]
+}

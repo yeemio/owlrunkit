@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/onboarding-bootstrap-plan-v1.json",
+  "title": "OwlCoda RunKit Onboarding Bootstrap Plan V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "exitCode",
+    "dryRun",
+    "writesPerformed",
+    "workspaceRoot",
+    "exactSpec",
+    "localBinding",
+    "registry",
+    "upgradeSafety",
+    "profiles",
+    "sharedSkill",
+    "steps",
+    "estimatedAdditionalSteps",
+    "estimatedEvidenceObjects",
+    "rollbackScope",
+    "issueCodes",
+    "nextCommand",
+    "authorizationGranted",
+    "planSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitOnboardingBootstrapPlanV1" },
+    "status": { "enum": ["bootstrap_ready", "bootstrap_blocked"] },
+    "exitCode": { "enum": [0, 2] },
+    "dryRun": { "const": true },
+    "writesPerformed": { "const": 0 },
+    "workspaceRoot": { "type": "string", "minLength": 1 },
+    "exactSpec": { "$ref": "#/$defs/exactSpec" },
+    "localBinding": { "$ref": "#/$defs/localBinding" },
+    "registry": { "$ref": "#/$defs/registry" },
+    "upgradeSafety": { "enum": ["safe", "unsafe"] },
+    "profiles": { "$ref": "#/$defs/profiles" },
+    "sharedSkill": { "$ref": "#/$defs/sharedSkill" },
+    "steps": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "estimatedAdditionalSteps": { "type": "integer", "minimum": 0 },
+    "estimatedEvidenceObjects": { "type": "integer", "minimum": 0 },
+    "rollbackScope": { "$ref": "#/$defs/strings" },
+    "issueCodes": { "$ref": "#/$defs/strings" },
+    "nextCommand": { "type": "string", "minLength": 1 },
+    "authorizationGranted": { "const": false },
+    "planSha256": { "$ref": "#/$defs/hashRef" }
+  },
+  "$defs": {
+    "exactSpec": {
+      "type": "string",
+      "pattern": "^owlrunkit@[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "hashRef": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "strings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "localBinding": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "version", "resolved", "integrity"],
+          "properties": {
+            "status": { "const": "bound" },
+            "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+            "resolved": { "type": "string", "minLength": 1 },
+            "integrity": { "type": "string", "pattern": "^sha512-" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "status": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "registry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "version", "shasum", "integrity", "tarballUrl"],
+          "properties": {
+            "status": { "const": "verified" },
+            "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+            "shasum": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+            "integrity": { "type": "string", "pattern": "^sha512-" },
+            "tarballUrl": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "issueCodes"],
+          "properties": {
+            "status": { "type": "string", "minLength": 1 },
+            "issueCodes": { "$ref": "#/$defs/strings" }
+          }
+        }
+      ]
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "action", "issueCodes", "evidenceRef"],
+      "properties": {
+        "status": { "enum": ["ready", "blocked"] },
+        "action": { "enum": ["detect_then_reconcile", "validate_current", "reconcile"] },
+        "issueCodes": { "$ref": "#/$defs/strings" },
+        "evidenceRef": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/hash" }
+          ]
+        }
+      }
+    },
+    "sharedSkill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "blocking", "issueCodes", "nextCommand"],
+      "properties": {
+        "status": { "enum": ["not_checked", "valid", "version_mismatch", "invalid"] },
+        "blocking": { "const": false },
+        "issueCodes": { "$ref": "#/$defs/strings" },
+        "nextCommand": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1 }
+          ]
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "action", "writes"],
+      "properties": {
+        "id": {
+          "enum": [
+            "exact_package_binding",
+            "initialize_core",
+            "reconcile_profiles",
+            "validate_profiles",
+            "adopt_registry_release",
+            "doctor"
+          ]
+        },
+        "action": { "type": "string", "minLength": 1 },
+        "writes": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

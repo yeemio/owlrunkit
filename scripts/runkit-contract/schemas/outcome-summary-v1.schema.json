@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/outcome-summary-v1.json",
+  "title": "OwlCoda RunKit Outcome Summary V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "result",
+    "headline",
+    "proofLevel",
+    "acceptanceLevels",
+    "proven",
+    "notProven",
+    "nextAction",
+    "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitOutcomeSummaryV1" },
+    "result": { "enum": ["pass", "fail", "invalidated", "indeterminate"] },
+    "headline": { "type": "string", "minLength": 1 },
+    "proofLevel": { "enum": ["captured_verification", "no_reusable_evidence"] },
+    "acceptanceLevels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidateIdentity",
+        "workspaceAttestation",
+        "verificationCommand",
+        "productExperience",
+        "deploymentRuntime",
+        "productionBusiness"
+      ],
+      "properties": {
+        "candidateIdentity": { "enum": ["bound", "invalidated", "not_proven"] },
+        "workspaceAttestation": { "enum": ["unchanged", "changed", "not_proven"] },
+        "verificationCommand": { "enum": ["passed", "failed", "invalidated", "not_proven"] },
+        "productExperience": { "const": "not_proven" },
+        "deploymentRuntime": {
+          "enum": [
+            "not_proven",
+            "reported_passed",
+            "reported_failed_recovered",
+            "reported_failed_unrecovered",
+            "reported_indeterminate"
+          ]
+        },
+        "productionBusiness": { "const": "not_proven" }
+      }
+    },
+    "proven": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "notProven": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "nextAction": { "type": "string", "minLength": 1 },
+    "authorizationGranted": { "const": false }
+  },
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitOutcomeSummaryV1",
+    "result": "pass",
+    "headline": "The exact verification command passed for the bound source candidate.",
+    "proofLevel": "captured_verification",
+    "acceptanceLevels": {
+      "candidateIdentity": "bound",
+      "workspaceAttestation": "unchanged",
+      "verificationCommand": "passed",
+      "productExperience": "not_proven",
+      "deploymentRuntime": "not_proven",
+      "productionBusiness": "not_proven"
+    },
+    "proven": ["The exact verification command exited successfully."],
+    "notProven": ["Product or UX acceptance was not performed by Quick Verification."],
+    "nextAction": "consume_attestation",
+    "authorizationGranted": false
+  }]
+}

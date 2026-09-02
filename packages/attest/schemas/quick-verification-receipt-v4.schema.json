@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/trust/quick-verification-receipt-v4.schema.json",
+  "title": "OwlCoda Quick Verification Receipt V4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "receiptId",
+    "assurance",
+    "authorizationGranted",
+    "coreIdentity",
+    "controllerWorkspaceRoot",
+    "workspaceBefore",
+    "sourceWorkspaceRoot",
+    "exactCommand",
+    "executionIsolation",
+    "mutationClasses",
+    "foreignWorkspace",
+    "verificationContext",
+    "startedAt",
+    "finishedAt",
+    "exitResult",
+    "outputArtifacts",
+    "workspaceAfter",
+    "mutationDecision",
+    "issueCodes"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaQuickVerificationReceiptV4" },
+    "receiptId": { "type": "string", "minLength": 1 },
+    "assurance": { "const": "captured_verification" },
+    "authorizationGranted": { "const": false },
+    "coreIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractVersion", "coreVersion", "coreManifestSha256"],
+      "properties": {
+        "contractVersion": { "type": "string", "minLength": 1 },
+        "coreVersion": { "type": "string", "minLength": 1 },
+        "coreManifestSha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "controllerWorkspaceRoot": { "type": "string", "minLength": 1 },
+    "workspaceBefore": {
+      "$ref": "quick-verification-receipt-v3.schema.json#/$defs/workspaceSnapshot"
+    },
+    "sourceWorkspaceRoot": { "type": "string", "minLength": 1 },
+    "exactCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable", "argv", "cwd"],
+      "properties": {
+        "executable": { "type": "string", "minLength": 1 },
+        "argv": { "type": "array", "items": { "type": "string" } },
+        "cwd": { "type": "string", "minLength": 1 }
+      }
+    },
+    "inputArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stdin"],
+      "properties": {
+        "stdin": { "$ref": "quick-verification-receipt-v3.schema.json#/$defs/materialArtifact" }
+      }
+    },
+    "executionIsolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "mode",
+        "consumerRoot",
+        "sourceCopy",
+        "cacheEnvironmentVariables",
+        "dependencyEnvironment",
+        "dependencyEnvironmentAfter",
+        "consumerDelta",
+        "cleanupStatus"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitQuickIsolationV1" },
+        "mode": { "const": "temporary_consumer" },
+        "consumerRoot": { "type": "string", "minLength": 1 },
+        "sourceCopy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fileCount", "totalBytes", "fingerprint"],
+          "properties": {
+            "fileCount": { "type": "integer", "minimum": 0 },
+            "totalBytes": { "type": "integer", "minimum": 0 },
+            "fingerprint": { "$ref": "#/$defs/hash" }
+          }
+        },
+        "cacheEnvironmentVariables": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "dependencyEnvironment": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "quick-verification-receipt-v3.schema.json#/$defs/dependencyEnvironment" }
+          ]
+        },
+        "dependencyEnvironmentAfter": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "quick-verification-receipt-v3.schema.json#/$defs/dependencyEnvironment" }
+          ]
+        },
+        "consumerDelta": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sourcePaths", "ignoredPaths"],
+          "properties": {
+            "sourcePaths": { "$ref": "quick-verification-receipt-v3.schema.json#/$defs/paths" },
+            "ignoredPaths": { "$ref": "quick-verification-receipt-v3.schema.json#/$defs/paths" }
+          }
+        },
+        "cleanupStatus": { "enum": ["removed", "cleanup_failed"] }
+      }
+    },
+    "mutationClasses": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspaceSource",
+        "boundIgnoredPaths",
+        "dependencyEnvironment",
+        "consumerSource",
+        "consumerIgnoredArtifacts",
+        "foreignTarget"
+      ],
+      "properties": {
+        "workspaceSource": { "enum": ["unchanged", "changed"] },
+        "boundIgnoredPaths": { "enum": ["not_bound", "unchanged", "changed"] },
+        "dependencyEnvironment": { "enum": ["not_bound", "unchanged", "changed"] },
+        "consumerSource": { "enum": ["unchanged", "changed"] },
+        "consumerIgnoredArtifacts": { "enum": ["none", "changed_and_discarded"] },
+        "foreignTarget": { "enum": ["unchanged", "changed"] }
+      }
+    },
+    "foreignWorkspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidateBefore",
+        "candidateAfter",
+        "filesystemBefore",
+        "filesystemAfter",
+        "zeroWriteObserved"
+      ],
+      "properties": {
+        "candidateBefore": { "$ref": "canonical-candidate-identity-v1.schema.json" },
+        "candidateAfter": { "$ref": "canonical-candidate-identity-v1.schema.json" },
+        "filesystemBefore": { "$ref": "foreign-workspace-filesystem-identity-v1.schema.json" },
+        "filesystemAfter": { "$ref": "foreign-workspace-filesystem-identity-v1.schema.json" },
+        "zeroWriteObserved": { "type": "boolean" }
+      }
+    },
+    "verificationContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "architecture", "runtime"],
+      "properties": {
+        "platform": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string", "minLength": 1 },
+        "runtime": { "type": "string", "minLength": 1 }
+      }
+    },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "finishedAt": { "type": "string", "format": "date-time" },
+    "exitResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exitCode", "signal"],
+      "properties": {
+        "exitCode": { "type": ["integer", "null"] },
+        "signal": { "type": ["string", "null"] }
+      }
+    },
+    "outputArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stdout", "stderr"],
+      "properties": {
+        "stdout": { "$ref": "quick-verification-receipt-v3.schema.json#/$defs/materialArtifact" },
+        "stderr": { "$ref": "quick-verification-receipt-v3.schema.json#/$defs/materialArtifact" }
+      }
+    },
+    "workspaceAfter": {
+      "$ref": "quick-verification-receipt-v3.schema.json#/$defs/workspaceSnapshot"
+    },
+    "mutationDecision": {
+      "enum": [
+        "source_unchanged",
+        "invalidated_by_command_source_mutation",
+        "invalidated_by_bound_ignored_mutation",
+        "invalidated_by_dependency_environment_mutation",
+        "invalidated_by_consumer_source_mutation",
+        "invalidated_by_isolation_cleanup_failure",
+        "invalidated_by_foreign_workspace_mutation",
+        "invalidated_by_multiple_mutations"
+      ]
+    },
+    "issueCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "signatureRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/hash" }
+      }
+    }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

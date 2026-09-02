@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-acceptance-packet-v2.schema.json",
+  "title": "OwlCoda RunKit Team Acceptance Packet V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "packetId", "projectBinding", "gateId", "workItemId",
+    "candidateId", "taskPacketSha256", "implementation", "verification",
+    "secondOrderRisk", "independenceStatus", "acceptanceLevel",
+    "candidateIdentityBefore", "candidateIdentityAfter", "freshAdversarialFamilies",
+    "coverageLedger", "protectedArtifactReadback", "productionWriteCount", "findings",
+    "verdict", "allowedNextGate", "remainingAcceptanceLevels",
+    "authorityBoundary", "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamAcceptancePacketV2" },
+    "packetId": { "$ref": "#/$defs/id" },
+    "projectBinding": { "$ref": "#/$defs/projectBinding" },
+    "gateId": { "$ref": "#/$defs/id" },
+    "workItemId": { "$ref": "#/$defs/id" },
+    "candidateId": { "$ref": "#/$defs/id" },
+    "taskPacketSha256": { "$ref": "#/$defs/sha256Ref" },
+    "implementation": { "$ref": "#/$defs/modelIdentity" },
+    "verification": { "$ref": "#/$defs/modelIdentity" },
+    "secondOrderRisk": { "enum": ["low", "medium", "high"] },
+    "independenceStatus": { "enum": ["independent", "same_family_not_independent", "control_tower"] },
+    "acceptanceLevel": { "enum": ["L0", "L1", "L2", "L3"] },
+    "candidateIdentityBefore": { "$ref": "#/$defs/sha256Ref" },
+    "candidateIdentityAfter": { "$ref": "#/$defs/sha256Ref" },
+    "freshAdversarialFamilies": { "$ref": "#/$defs/strings" },
+    "coverageLedger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceReused", "checksRunFresh", "coveredChecksNotRepeated", "receiptInvalidations", "deferredTransitionGates"],
+      "properties": {
+        "evidenceReused": { "$ref": "#/$defs/strings" },
+        "checksRunFresh": { "$ref": "#/$defs/strings" },
+        "coveredChecksNotRepeated": { "$ref": "#/$defs/strings" },
+        "receiptInvalidations": { "$ref": "#/$defs/strings" },
+        "deferredTransitionGates": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "protectedArtifactReadback": { "$ref": "#/$defs/strings" },
+    "productionWriteCount": { "type": "integer", "minimum": 0 },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "code", "message", "evidenceRefs"],
+        "properties": {
+          "severity": { "enum": ["critical", "important", "minor", "note"] },
+          "code": { "$ref": "#/$defs/id" },
+          "message": { "$ref": "#/$defs/text" },
+          "evidenceRefs": { "$ref": "#/$defs/strings" }
+        }
+      }
+    },
+    "verdict": { "enum": ["ACCEPT", "REWORK", "BLOCKED"] },
+    "allowedNextGate": { "$ref": "#/$defs/nullableText" },
+    "remainingAcceptanceLevels": { "type": "array", "uniqueItems": true, "items": { "enum": ["L0", "L1", "L2", "L3"] } },
+    "authorityBoundary": { "$ref": "#/$defs/authorityBoundary" },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "sha256Ref": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "projectBinding": { "type": "object", "additionalProperties": false, "required": ["projectId", "projectTruthHash"], "properties": { "projectId": { "$ref": "#/$defs/id" }, "projectTruthHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } },
+    "modelIdentity": { "type": "object", "additionalProperties": false, "required": ["agent", "modelFamily", "modelVersion"], "properties": { "agent": { "$ref": "#/$defs/id" }, "modelFamily": { "$ref": "#/$defs/text" }, "modelVersion": { "$ref": "#/$defs/text" } } },
+    "authorityBoundary": { "type": "object", "additionalProperties": false, "required": ["agentDispatch", "git", "release", "deployment", "production", "business", "automation", "money"], "properties": { "agentDispatch": { "const": false }, "git": { "const": false }, "release": { "const": false }, "deployment": { "const": false }, "production": { "const": false }, "business": { "const": false }, "automation": { "const": false }, "money": { "const": false } } }
+  },
+  "allOf": [{
+    "if": {
+      "properties": {
+        "verdict": { "const": "ACCEPT" },
+        "acceptanceLevel": { "enum": ["L1", "L2", "L3"] }
+      },
+      "required": ["verdict", "acceptanceLevel"]
+    },
+    "then": {
+      "properties": {
+        "freshAdversarialFamilies": { "minItems": 1 },
+        "coverageLedger": { "properties": { "checksRunFresh": { "minItems": 1 } } }
+      }
+    }
+  }],
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitTeamAcceptancePacketV2",
+    "packetId": "acceptance-packet-001",
+    "projectBinding": { "projectId": "team-phase1", "projectTruthHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+    "gateId": "ready", "workItemId": "work-1", "candidateId": "candidate-001",
+    "taskPacketSha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "implementation": { "agent": "agent-a", "modelFamily": "provider:family-a", "modelVersion": "model-a-1" },
+    "verification": { "agent": "agent-b", "modelFamily": "provider:family-b", "modelVersion": "model-b-1" },
+    "secondOrderRisk": "medium", "independenceStatus": "independent", "acceptanceLevel": "L1",
+    "candidateIdentityBefore": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "candidateIdentityAfter": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "freshAdversarialFamilies": ["authority boundary"],
+    "coverageLedger": { "evidenceReused": ["receipt:quick-001"], "checksRunFresh": ["authority boundary"], "coveredChecksNotRepeated": [], "receiptInvalidations": [], "deferredTransitionGates": ["L2 package consumer"] },
+    "protectedArtifactReadback": ["docs/contract.md: unchanged"], "productionWriteCount": 0,
+    "findings": [], "verdict": "ACCEPT", "allowedNextGate": "L2 package consumer", "remainingAcceptanceLevels": ["L2", "L3"],
+    "authorityBoundary": { "agentDispatch": false, "git": false, "release": false, "deployment": false, "production": false, "business": false, "automation": false, "money": false },
+    "authorizationGranted": false
+  }]
+}

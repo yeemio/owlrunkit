@@ -1,0 +1,39 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "owlrunkit-0.23.0",
+  "documentNamespace": "https://owlcoda.com/spdx/owlrunkit/0.23.0",
+  "creationInfo": {
+    "created": "2026-07-29T00:00:00Z",
+    "creators": [
+      "Organization: OwlCoda"
+    ]
+  },
+  "packages": [
+    {
+      "name": "owlrunkit",
+      "SPDXID": "SPDXRef-Package-OwlRunKit",
+      "versionInfo": "0.23.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "GPL-3.0-or-later",
+      "licenseDeclared": "GPL-3.0-or-later",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/owlrunkit@0.23.0"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-OwlRunKit"
+    }
+  ]
+}

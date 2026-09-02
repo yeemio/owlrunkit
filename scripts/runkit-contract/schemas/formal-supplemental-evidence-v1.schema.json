@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/formal-supplemental-evidence-v1.json",
+  "title": "OwlCoda RunKit Formal Supplemental Evidence V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "evidenceId", "kind", "classificationBasis", "status", "gating", "sourceBinding", "quickEvidence", "limitations", "frozenMaterials", "authorizationGranted", "supplementalEvidenceSha256"],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitFormalSupplementalEvidenceV1" },
+    "runId": { "$ref": "#/$defs/id" },
+    "evidenceId": { "$ref": "#/$defs/id" },
+    "kind": { "enum": ["supplemental-local", "networked"] },
+    "classificationBasis": { "const": "operator_declared_not_attested" },
+    "status": { "const": "attached" },
+    "gating": { "const": false },
+    "sourceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidatePath", "candidateSha256", "sourceFingerprint", "quickWorkspaceFingerprint"],
+      "properties": {
+        "candidatePath": { "type": "string", "minLength": 1 },
+        "candidateSha256": { "$ref": "#/$defs/prefixedHash" },
+        "sourceFingerprint": { "$ref": "#/$defs/hash" },
+        "quickWorkspaceFingerprint": { "$ref": "#/$defs/prefixedHash" }
+      }
+    },
+    "quickEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receiptId", "receiptPath", "receiptSha256", "receiptSchemaVersion", "exactCommand", "attestationDecision", "attestationIssueCodes"],
+      "properties": {
+        "receiptId": { "type": "string", "minLength": 1 },
+        "receiptPath": { "type": "string", "minLength": 1 },
+        "receiptSha256": { "$ref": "#/$defs/prefixedHash" },
+        "receiptSchemaVersion": { "type": "string", "minLength": 1 },
+        "exactCommand": { "type": "object" },
+        "attestationDecision": { "const": "GO" },
+        "attestationIssueCodes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "limitations": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "frozenMaterials": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sourcePath", "evidenceObjectPath", "sha256", "sizeBytes"],
+        "properties": {
+          "sourcePath": { "type": "string", "minLength": 1 },
+          "evidenceObjectPath": { "type": "string", "pattern": "^\\.owlcoda/runkit/evidence/raw-sha256/[a-f0-9]{64}$" },
+          "sha256": { "$ref": "#/$defs/prefixedHash" },
+          "sizeBytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "authorizationGranted": { "const": false },
+    "supplementalEvidenceSha256": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "prefixedHash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitFormalSupplementalEvidenceV1",
+      "runId": "release-001",
+      "evidenceId": "network-audit",
+      "kind": "networked",
+      "classificationBasis": "operator_declared_not_attested",
+      "status": "attached",
+      "gating": false,
+      "sourceBinding": {
+        "candidatePath": ".owlcoda/runkit/executions/release-001/source-candidates/quality.json",
+        "candidateSha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "sourceFingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "quickWorkspaceFingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "quickEvidence": {
+        "receiptId": "quick-001",
+        "receiptPath": ".owlcoda/runkit/quick/receipts/quick-001/receipt.json",
+        "receiptSha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "receiptSchemaVersion": "OwlCodaQuickVerificationReceiptV3",
+        "exactCommand": {},
+        "attestationDecision": "GO",
+        "attestationIssueCodes": []
+      },
+      "limitations": [
+        "supplemental_evidence_is_not_formal_sandbox_evidence",
+        "network_classification_is_operator_declared_not_attested"
+      ],
+      "frozenMaterials": [{
+        "sourcePath": ".owlcoda/runkit/quick/receipts/quick-001/receipt.json",
+        "evidenceObjectPath": ".owlcoda/runkit/evidence/raw-sha256/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "sizeBytes": 100
+      }],
+      "authorizationGranted": false,
+      "supplementalEvidenceSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+  ]
+}

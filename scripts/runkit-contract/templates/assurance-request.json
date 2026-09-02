@@ -1,0 +1,19 @@
+{
+  "needsDurableEvidence": true,
+  "needsFormalAcceptance": false,
+  "mayMutateProject": false,
+  "externalSideEffects": false,
+  "longRunning": false,
+  "interruptionRecovery": false,
+  "dirtyParallelWorkspace": false,
+  "irreversibleChange": false,
+  "rollbackUncertain": false,
+  "permissionSensitive": false,
+  "securitySensitive": false,
+  "fundsAtRisk": false,
+  "schemaOrDataMigration": false,
+  "exactCommandCount": 1,
+  "writerCount": 0,
+  "riskCategories": [],
+  "authorizationGranted": false
+}

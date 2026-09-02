@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/formal-check-v2.json",
+  "title": "OwlCoda RunKit Formal Check V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "checkId",
+    "sequence",
+    "status",
+    "candidatePath",
+    "candidateSha256",
+    "payloadSha256",
+    "sourceFingerprint",
+    "verificationContext",
+    "verificationContextFingerprint",
+    "snapshotRequestPath",
+    "snapshotPath",
+    "commandExitCode",
+    "verificationCommandPolicy",
+    "envelopePath",
+    "envelopeSha256",
+    "envelopeReceiptPath",
+    "envelopeReceiptSha256",
+    "envelopeFormalEligible",
+    "failureCategory",
+    "failureDetail",
+    "finalized",
+    "authorizationGranted",
+    "formalCheckSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitFormalCheckV2" },
+    "runId": { "$ref": "#/$defs/id" },
+    "checkId": { "$ref": "#/$defs/id" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["formal_check_passed", "formal_check_failed"] },
+    "candidatePath": { "type": "string", "minLength": 1 },
+    "candidateSha256": { "$ref": "#/$defs/prefixedHash" },
+    "payloadSha256": { "$ref": "#/$defs/prefixedHash" },
+    "sourceFingerprint": { "$ref": "#/$defs/hash" },
+    "verificationContext": { "$ref": "#/$defs/verificationContext" },
+    "verificationContextFingerprint": { "$ref": "#/$defs/hash" },
+    "snapshotRequestPath": { "type": "string", "minLength": 1 },
+    "snapshotPath": { "type": "string", "minLength": 1 },
+    "commandExitCode": { "enum": [0, 2] },
+    "verificationCommandPolicy": { "$ref": "#/$defs/verificationCommandPolicy" },
+    "envelopePath": { "type": "string", "minLength": 1 },
+    "envelopeSha256": { "$ref": "#/$defs/hash" },
+    "envelopeReceiptPath": { "type": "string", "minLength": 1 },
+    "envelopeReceiptSha256": { "$ref": "#/$defs/hash" },
+    "envelopeFormalEligible": { "type": "boolean" },
+    "failureCategory": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "source_check_failed",
+        "envelope_capability_missing",
+        "toolchain_resolution_failed",
+        "network_policy_blocked"
+      ]
+    },
+    "failureDetail": { "type": ["string", "null"] },
+    "finalized": { "const": false },
+    "authorizationGranted": { "const": false },
+    "formalCheckSha256": { "$ref": "#/$defs/prefixedHash" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "formal_check_passed" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "failureCategory": { "const": null },
+          "failureDetail": { "const": null },
+          "envelopeFormalEligible": { "const": true }
+        }
+      },
+      "else": {
+        "properties": {
+          "failureCategory": { "enum": ["source_check_failed", "envelope_capability_missing", "toolchain_resolution_failed", "network_policy_blocked"] },
+          "failureDetail": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "prefixedHash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "nonempty": { "type": "string", "minLength": 1 },
+    "nameVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonempty" },
+        "version": { "$ref": "#/$defs/nonempty" }
+      }
+    },
+    "pathHash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/nonempty" },
+        "sha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "idHash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonempty" },
+        "sha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "verificationContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "reusePolicy", "platform", "toolchains", "lockfiles", "fixtures", "services", "environment"],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitVerificationContextV1" },
+        "reusePolicy": { "enum": ["portable", "platform_bound", "environment_bound"] },
+        "platform": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["os", "arch"],
+              "properties": {
+                "os": { "$ref": "#/$defs/nonempty" },
+                "arch": { "$ref": "#/$defs/nonempty" }
+              }
+            }
+          ]
+        },
+        "toolchains": { "type": "array", "items": { "$ref": "#/$defs/nameVersion" } },
+        "lockfiles": { "type": "array", "items": { "$ref": "#/$defs/pathHash" } },
+        "fixtures": { "type": "array", "items": { "$ref": "#/$defs/idHash" } },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "identity"],
+            "properties": {
+              "id": { "$ref": "#/$defs/nonempty" },
+              "identity": { "$ref": "#/$defs/nonempty" }
+            }
+          }
+        },
+        "environment": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "valueSha256"],
+            "properties": {
+              "name": { "$ref": "#/$defs/nonempty" },
+              "valueSha256": { "$ref": "#/$defs/hash" }
+            }
+          }
+        }
+      }
+    },
+    "verificationCommandPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "mode", "riskClassification", "profileCommandIds", "envelopeSha256", "envelopeReceiptSha256", "authorizationGranted"],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitFormalVerificationCommandPolicyV1" },
+        "mode": { "const": "verification_envelope_v1" },
+        "riskClassification": { "const": "enforced_verification_envelope" },
+        "profileCommandIds": { "const": [] },
+        "envelopeSha256": { "$ref": "#/$defs/hash" },
+        "envelopeReceiptSha256": { "$ref": "#/$defs/hash" },
+        "authorizationGranted": { "const": false }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitFormalCheckV2",
+      "runId": "release-001",
+      "checkId": "quality",
+      "sequence": 1,
+      "status": "formal_check_failed",
+      "candidatePath": ".owlcoda/runkit/executions/release-001/source-candidates/quality.json",
+      "candidateSha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "payloadSha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "sourceFingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "verificationContext": {
+        "schemaVersion": "OwlCodaRunKitVerificationContextV1",
+        "reusePolicy": "portable",
+        "platform": null,
+        "toolchains": [],
+        "lockfiles": [],
+        "fixtures": [],
+        "services": [],
+        "environment": []
+      },
+      "verificationContextFingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "snapshotRequestPath": ".owlcoda/runkit/executions/release-001/formal-check-requests/quality.json",
+      "snapshotPath": ".owlcoda/runkit/executions/release-001/snapshots/quality-snapshot.json",
+      "commandExitCode": 2,
+      "verificationCommandPolicy": {
+        "schemaVersion": "OwlCodaRunKitFormalVerificationCommandPolicyV1",
+        "mode": "verification_envelope_v1",
+        "riskClassification": "enforced_verification_envelope",
+        "profileCommandIds": [],
+        "envelopeSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "envelopeReceiptSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "authorizationGranted": false
+      },
+      "envelopePath": ".owlcoda/runkit/executions/release-001/formal-envelopes/quality.json",
+      "envelopeSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "envelopeReceiptPath": ".owlcoda/runkit/executions/release-001/verification-envelopes/quality/verification-envelope-receipt.json",
+      "envelopeReceiptSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "envelopeFormalEligible": false,
+      "failureCategory": "source_check_failed",
+      "failureDetail": "verification_command_returned_nonzero",
+      "finalized": false,
+      "authorizationGranted": false,
+      "formalCheckSha256": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+    }
+  ]
+}

@@ -1,0 +1,592 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/hook-recovery-v1.schema.json",
+  "title": "OwlCoda RunKit Hook Recovery V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "exitCode",
+    "projectId",
+    "projectTruthHash",
+    "objectiveDigest",
+    "objectivePreview",
+    "objectiveTruncated",
+    "projectTextTrust",
+    "overall",
+    "progress",
+    "headline",
+    "dominantGap",
+    "nextActorId",
+    "nextAction",
+    "deliveryDisposition",
+    "execution",
+    "warnings",
+    "latestProjectFactAt",
+    "textTruncated",
+    "readOnly",
+    "writesPerformed",
+    "authorityBoundary",
+    "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "OwlCodaRunKitHookRecoveryV1"
+    },
+    "status": {
+      "enum": [
+        "hook_recovery_ready",
+        "no_project_driver",
+        "invalid_control_truth"
+      ]
+    },
+    "exitCode": {
+      "enum": [
+        0,
+        2
+      ]
+    },
+    "projectId": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/id"
+        }
+      ]
+    },
+    "projectTruthHash": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/hash"
+        }
+      ]
+    },
+    "objectiveDigest": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/sha256Ref"
+        }
+      ]
+    },
+    "objectivePreview": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "maxLength": 180
+        }
+      ]
+    },
+    "objectiveTruncated": {
+      "type": "boolean"
+    },
+    "projectTextTrust": {
+      "const": "untrusted_data"
+    },
+    "overall": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "enum": [
+            "planned",
+            "active",
+            "active_with_blockers",
+            "completed"
+          ]
+        }
+      ]
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completedWorkItems",
+        "totalWorkItems"
+      ],
+      "properties": {
+        "completedWorkItems": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ]
+        },
+        "totalWorkItems": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ]
+        }
+      }
+    },
+    "headline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "maxLength": 120
+        }
+      ]
+    },
+    "dominantGap": {
+      "$ref": "#/$defs/dominantGap"
+    },
+    "nextActorId": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/id"
+        }
+      ]
+    },
+    "nextAction": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "maxLength": 120
+        }
+      ]
+    },
+    "deliveryDisposition": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "enum": [
+            "work_ledger_incomplete",
+            "work_ledger_complete",
+            "source_accepted",
+            "integrated",
+            "materialized",
+            "deployed",
+            "live_readback_passed",
+            "product_accepted"
+          ]
+        }
+      ]
+    },
+    "execution": {
+      "$ref": "#/$defs/execution"
+    },
+    "warnings": {
+      "$ref": "#/$defs/warnings"
+    },
+    "latestProjectFactAt": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/timestamp"
+        }
+      ]
+    },
+    "textTruncated": {
+      "type": "boolean"
+    },
+    "readOnly": {
+      "const": true
+    },
+    "writesPerformed": {
+      "const": false
+    },
+    "authorityBoundary": {
+      "$ref": "#/$defs/authorityBoundary"
+    },
+    "authorizationGranted": {
+      "const": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "hook_recovery_ready"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "exitCode": {
+            "const": 0
+          },
+          "projectId": {
+            "$ref": "#/$defs/id"
+          },
+          "projectTruthHash": {
+            "$ref": "#/$defs/hash"
+          },
+          "objectiveDigest": {
+            "$ref": "#/$defs/sha256Ref"
+          },
+          "objectivePreview": {
+            "type": "string",
+            "maxLength": 180
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "no_project_driver"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "exitCode": {
+            "const": 0
+          },
+          "projectId": {
+            "type": "null"
+          },
+          "projectTruthHash": {
+            "type": "null"
+          },
+          "objectiveDigest": {
+            "type": "null"
+          },
+          "objectivePreview": {
+            "type": "null"
+          },
+          "overall": {
+            "type": "null"
+          },
+          "deliveryDisposition": {
+            "type": "null"
+          },
+          "latestProjectFactAt": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "invalid_control_truth"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "exitCode": {
+            "const": 2
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sha256Ref": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "dominantGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "reason",
+        "truncated"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+        },
+        "id": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/id"
+            }
+          ]
+        },
+        "reason": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "maxLength": 120
+            }
+          ]
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "openCount",
+        "activeLeaseCount"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "no_active_execution",
+            "single_active_execution",
+            "multiple_active_executions",
+            "invalid_control_truth"
+          ]
+        },
+        "openCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "activeLeaseCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "warnings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "count",
+        "blockingCount",
+        "codes",
+        "truncated"
+      ],
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blockingCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "codes": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+          }
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authorityBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentDispatch",
+        "git",
+        "release",
+        "deployment",
+        "production",
+        "business",
+        "automation",
+        "money"
+      ],
+      "properties": {
+        "agentDispatch": {
+          "const": false
+        },
+        "git": {
+          "const": false
+        },
+        "release": {
+          "const": false
+        },
+        "deployment": {
+          "const": false
+        },
+        "production": {
+          "const": false
+        },
+        "business": {
+          "const": false
+        },
+        "automation": {
+          "const": false
+        },
+        "money": {
+          "const": false
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitHookRecoveryV1",
+      "status": "hook_recovery_ready",
+      "exitCode": 0,
+      "projectId": "release-022",
+      "projectTruthHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "objectiveDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "objectivePreview": "Ship the bounded Hook recovery contract",
+      "objectiveTruncated": false,
+      "projectTextTrust": "untrusted_data",
+      "overall": "active",
+      "progress": {
+        "completedWorkItems": 1,
+        "totalWorkItems": 2
+      },
+      "headline": "Dominant gap: work item verification.",
+      "dominantGap": {
+        "kind": "work_item",
+        "id": "verification",
+        "reason": "Verification is ready.",
+        "truncated": false
+      },
+      "nextActorId": "reviewer",
+      "nextAction": "Verify verification.",
+      "deliveryDisposition": "work_ledger_incomplete",
+      "execution": {
+        "state": "no_active_execution",
+        "openCount": 0,
+        "activeLeaseCount": 0
+      },
+      "warnings": {
+        "count": 0,
+        "blockingCount": 0,
+        "codes": [],
+        "truncated": false
+      },
+      "latestProjectFactAt": "2026-08-24T01:03:00.000Z",
+      "textTruncated": false,
+      "readOnly": true,
+      "writesPerformed": false,
+      "authorityBoundary": {
+        "agentDispatch": false,
+        "git": false,
+        "release": false,
+        "deployment": false,
+        "production": false,
+        "business": false,
+        "automation": false,
+        "money": false
+      },
+      "authorizationGranted": false
+    },
+    {
+      "schemaVersion": "OwlCodaRunKitHookRecoveryV1",
+      "status": "no_project_driver",
+      "exitCode": 0,
+      "projectId": null,
+      "projectTruthHash": null,
+      "objectiveDigest": null,
+      "objectivePreview": null,
+      "objectiveTruncated": false,
+      "projectTextTrust": "untrusted_data",
+      "overall": null,
+      "progress": {
+        "completedWorkItems": null,
+        "totalWorkItems": null
+      },
+      "headline": null,
+      "dominantGap": {
+        "kind": "no_project_driver",
+        "id": null,
+        "reason": "No Project Driver is initialized.",
+        "truncated": false
+      },
+      "nextActorId": null,
+      "nextAction": null,
+      "deliveryDisposition": null,
+      "execution": {
+        "state": "no_active_execution",
+        "openCount": 0,
+        "activeLeaseCount": 0
+      },
+      "warnings": {
+        "count": 0,
+        "blockingCount": 0,
+        "codes": [],
+        "truncated": false
+      },
+      "latestProjectFactAt": null,
+      "textTruncated": false,
+      "readOnly": true,
+      "writesPerformed": false,
+      "authorityBoundary": {
+        "agentDispatch": false,
+        "git": false,
+        "release": false,
+        "deployment": false,
+        "production": false,
+        "business": false,
+        "automation": false,
+        "money": false
+      },
+      "authorizationGranted": false
+    }
+  ]
+}

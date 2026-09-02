@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/profile-reconcile-plan-v1.json",
+  "title": "OwlCoda RunKit Profiles Reconcile Plan V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "valid", "exitCode", "dryRun", "writesPerformed", "detectionSha256", "currentProfilesSha256", "issueCodes", "authorizationGranted"],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitProfilesReconcilePlanV1" },
+    "status": { "enum": ["profiles_reconcile_ready", "profiles_already_current", "profiles_reconcile_blocked"] },
+    "valid": { "type": "boolean" },
+    "exitCode": { "enum": [0, 2] },
+    "dryRun": { "type": "boolean" },
+    "writesPerformed": { "const": 0 },
+    "reconcileSha256": { "$ref": "#/$defs/hash" },
+    "detectionSha256": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/hash" }] },
+    "currentProfilesSha256": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/hash" }] },
+    "proposedProfilesSha256": { "$ref": "#/$defs/hash" },
+    "normalizationOnly": { "type": "boolean" },
+    "addedProfileIds": { "$ref": "#/$defs/strings" },
+    "updatedProfiles": { "type": "array", "items": { "$ref": "#/$defs/update" } },
+    "proposedProfiles": { "$ref": "#/$defs/profiles" },
+    "issueCodes": { "$ref": "#/$defs/strings" },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "update": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "addedPaths", "addedCommandIds", "updatedCommandIds"],
+      "properties": {
+        "profileId": { "type": "string", "minLength": 1 },
+        "addedPaths": { "$ref": "#/$defs/strings" },
+        "addedCommandIds": { "$ref": "#/$defs/strings" },
+        "updatedCommandIds": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "cwd", "executable", "argv"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "cwd": { "type": "string", "minLength": 1 },
+        "executable": { "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }] },
+        "argv": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "paths", "role", "primary", "requiresProfileIds", "commands"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "paths": { "$ref": "#/$defs/strings" },
+        "role": { "enum": ["primary", "supporting"] },
+        "primary": { "type": "boolean" },
+        "requiresProfileIds": { "$ref": "#/$defs/strings" },
+        "commands": { "type": "array", "items": { "$ref": "#/$defs/command" } }
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "profiles"],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitProfilesV1" },
+        "profiles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/profile" } }
+      }
+    }
+  },
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitProfilesReconcilePlanV1",
+    "status": "profiles_reconcile_ready",
+    "valid": true,
+    "exitCode": 0,
+    "dryRun": true,
+    "writesPerformed": 0,
+    "reconcileSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "detectionSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "currentProfilesSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "proposedProfilesSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "normalizationOnly": false,
+    "addedProfileIds": [],
+    "updatedProfiles": [{
+      "profileId": "node-quality",
+      "addedPaths": ["package.json"],
+      "addedCommandIds": ["npm-test"],
+      "updatedCommandIds": []
+    }],
+    "proposedProfiles": {
+      "schemaVersion": "OwlCodaRunKitProfilesV1",
+      "profiles": [{
+        "id": "node-quality",
+        "paths": ["package.json"],
+        "role": "primary",
+        "primary": true,
+        "requiresProfileIds": [],
+        "commands": [{ "id": "npm-test", "cwd": ".", "executable": "/usr/bin/node", "argv": ["/usr/lib/npm-cli.js", "run", "test"] }]
+      }]
+    },
+    "issueCodes": [],
+    "authorizationGranted": false
+  }]
+}

@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-delivery-status-v3.schema.json",
+  "title": "OwlCoda RunKit Team Delivery Status V3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "status", "graphSource", "persistedTeamGraph", "projectId",
+    "projectTruthHash", "projectOverall", "recommendation", "lanes", "pathConflicts",
+    "acceptanceGaps", "ownerTransitions", "externalGates", "deliveryLifecycle",
+    "unmodeledCandidateLanes", "warnings", "warningSummary", "advisorySummary",
+    "nextAction", "dispatch", "authorityBoundary", "authorizationGranted", "exitCode"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamDeliveryStatusV3" },
+    "status": { "const": "team_delivery_status" },
+    "graphSource": { "const": "project_driver" },
+    "persistedTeamGraph": { "const": false },
+    "projectId": { "$ref": "#/$defs/nullableText" },
+    "projectTruthHash": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{64}$" }] },
+    "projectOverall": { "$ref": "#/$defs/text" },
+    "recommendation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["teamCoordinationMode", "coordination", "reasonCodes"],
+      "properties": {
+        "teamCoordinationMode": { "enum": ["off", "team"] },
+        "coordination": { "enum": ["none", "project_driver_team"] },
+        "reasonCodes": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "lanes": { "type": "array", "items": { "$ref": "team-delivery-status-v2.schema.json#/$defs/lane" } },
+    "pathConflicts": { "type": "array", "items": { "$ref": "team-delivery-status-v2.schema.json#/$defs/pathConflict" } },
+    "acceptanceGaps": { "type": "array", "items": { "$ref": "team-delivery-status-v2.schema.json#/$defs/acceptanceGap" } },
+    "ownerTransitions": { "type": "array", "items": { "$ref": "team-delivery-status-v2.schema.json#/$defs/ownerTransition" } },
+    "externalGates": { "type": "array", "items": { "$ref": "team-delivery-status-v2.schema.json#/$defs/externalGate" } },
+    "deliveryLifecycle": { "oneOf": [{ "type": "null" }, { "$ref": "team-delivery-status-v2.schema.json#/$defs/deliveryLifecycle" }] },
+    "unmodeledCandidateLanes": { "type": "array", "items": { "$ref": "team-delivery-status-v2.schema.json#/$defs/candidateLane" } },
+    "warnings": { "type": "array", "items": { "$ref": "#/$defs/advisory" } },
+    "warningSummary": { "$ref": "#/$defs/emptySummary" },
+    "advisorySummary": { "$ref": "#/$defs/advisorySummary" },
+    "nextAction": { "$ref": "#/$defs/nullableText" },
+    "dispatch": { "$ref": "team-delivery-status-v2.schema.json#/$defs/dispatch" },
+    "authorityBoundary": { "$ref": "team-delivery-status-v2.schema.json#/$defs/authorityBoundary" },
+    "authorizationGranted": { "const": false },
+    "exitCode": { "const": 0 }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "nonemptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "advisory": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "workItemId", "message", "truthRefs", "severity", "blocking", "requiredAtGate", "recommendedAction"],
+      "properties": {
+        "code": { "const": "no_bound_verification_receipt" },
+        "workItemId": { "$ref": "#/$defs/text" },
+        "message": { "$ref": "#/$defs/text" },
+        "truthRefs": { "$ref": "#/$defs/nonemptyStrings" },
+        "severity": { "const": "advisory" },
+        "blocking": { "const": false },
+        "requiredAtGate": { "const": false },
+        "recommendedAction": { "enum": ["no_retroactive_action_required", "bind_quick_or_formal_receipt_if_reusable_evidence_is_required"] }
+      }
+    },
+    "advisoryGroup": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "severity", "blocking", "count", "workItemIds", "requiredAtGate", "recommendedAction"],
+      "properties": {
+        "code": { "const": "no_bound_verification_receipt" },
+        "severity": { "const": "advisory" },
+        "blocking": { "const": false },
+        "count": { "type": "integer", "minimum": 1 },
+        "workItemIds": { "$ref": "#/$defs/nonemptyStrings" },
+        "requiredAtGate": { "const": false },
+        "recommendedAction": { "enum": ["no_retroactive_action_required", "bind_quick_or_formal_receipt_if_reusable_evidence_is_required", "review_individual_warning_actions"] }
+      }
+    },
+    "emptySummary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["count", "groups"],
+      "properties": {
+        "count": { "const": 0 },
+        "groups": { "type": "array", "maxItems": 0 }
+      }
+    },
+    "advisorySummary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["count", "groups"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 0 },
+        "groups": { "type": "array", "items": { "$ref": "#/$defs/advisoryGroup" } }
+      }
+    }
+  },
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitTeamDeliveryStatusV3",
+    "status": "team_delivery_status",
+    "graphSource": "project_driver",
+    "persistedTeamGraph": false,
+    "projectId": null,
+    "projectTruthHash": null,
+    "projectOverall": "not_initialized",
+    "recommendation": { "teamCoordinationMode": "off", "coordination": "none", "reasonCodes": ["project_driver_not_initialized"] },
+    "lanes": [], "pathConflicts": [], "acceptanceGaps": [], "ownerTransitions": [],
+    "externalGates": [], "deliveryLifecycle": null, "unmodeledCandidateLanes": [],
+    "warnings": [], "warningSummary": { "count": 0, "groups": [] },
+    "advisorySummary": { "count": 0, "groups": [] }, "nextAction": null,
+    "dispatch": { "mode": "none", "permitted": false, "nextCommand": null },
+    "authorityBoundary": { "agentDispatch": false, "git": false, "release": false, "deployment": false, "production": false, "business": false, "automation": false, "money": false },
+    "authorizationGranted": false, "exitCode": 0
+  }]
+}

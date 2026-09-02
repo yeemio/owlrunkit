@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/delivery-lifecycle-v1.schema.json",
+  "title": "OwlCoda RunKit Delivery Lifecycle V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "lifecycleStatus", "currentStage", "nextRequiredStage",
+    "blockingStage", "blockingExternalGateIds", "stages", "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitDeliveryLifecycleV1" },
+    "lifecycleStatus": { "enum": ["in_progress", "blocked", "completed"] },
+    "currentStage": {
+      "enum": [
+        "work_ledger_incomplete", "work_ledger_complete", "source_accepted",
+        "integrated", "materialized", "deployed", "live_readback_passed", "product_accepted"
+      ]
+    },
+    "nextRequiredStage": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/stageName" }] },
+    "blockingStage": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/stageName" }] },
+    "blockingExternalGateIds": { "$ref": "#/$defs/strings" },
+    "stages": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "prefixItems": [
+        { "$ref": "#/$defs/sourceStage" },
+        { "$ref": "#/$defs/integrationStage" },
+        { "$ref": "#/$defs/materializationStage" },
+        { "$ref": "#/$defs/deploymentStage" },
+        { "$ref": "#/$defs/liveReadbackStage" },
+        { "$ref": "#/$defs/productAcceptanceStage" }
+      ],
+      "items": false
+    },
+    "authorizationGranted": { "const": false }
+  },
+  "allOf": [
+    { "if": { "properties": { "currentStage": { "const": "product_accepted" } }, "required": ["currentStage"] }, "then": { "properties": { "lifecycleStatus": { "const": "completed" }, "nextRequiredStage": { "type": "null" }, "blockingStage": { "type": "null" }, "blockingExternalGateIds": { "maxItems": 0 } } } }
+  ],
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitDeliveryLifecycleV1",
+      "lifecycleStatus": "in_progress",
+      "currentStage": "work_ledger_complete",
+      "nextRequiredStage": "source",
+      "blockingStage": null,
+      "blockingExternalGateIds": [],
+      "stages": [
+        { "stage": "source", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+        { "stage": "integration", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+        { "stage": "materialization", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+        { "stage": "deployment", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+        { "stage": "live_readback", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+        { "stage": "product_acceptance", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null }
+      ],
+      "authorizationGranted": false
+    }
+  ],
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "timestamp": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$" },
+    "nullableTimestamp": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/timestamp" }] },
+    "stageName": { "enum": ["source", "integration", "materialization", "deployment", "live_readback", "product_acceptance"] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "stageBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "status", "recordId", "ownerAgentId", "summary", "evidenceRefs", "externalGateIds", "occurredAt", "truthRef"],
+      "properties": {
+        "stage": { "$ref": "#/$defs/stageName" },
+        "status": { "type": "string", "minLength": 1 },
+        "recordId": { "$ref": "#/$defs/nullableText" },
+        "ownerAgentId": { "$ref": "#/$defs/nullableText" },
+        "summary": { "$ref": "#/$defs/nullableText" },
+        "evidenceRefs": { "$ref": "#/$defs/strings" },
+        "externalGateIds": { "$ref": "#/$defs/strings" },
+        "occurredAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "truthRef": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "sourceStage": { "allOf": [{ "$ref": "#/$defs/stageBase" }, { "properties": { "stage": { "const": "source" }, "status": { "enum": ["pending", "accepted", "rejected"] } } }] },
+    "integrationStage": { "allOf": [{ "$ref": "#/$defs/stageBase" }, { "properties": { "stage": { "const": "integration" }, "status": { "enum": ["pending", "integrated", "rejected"] } } }] },
+    "materializationStage": { "allOf": [{ "$ref": "#/$defs/stageBase" }, { "properties": { "stage": { "const": "materialization" }, "status": { "enum": ["pending", "materialized", "failed"] } } }] },
+    "deploymentStage": { "allOf": [{ "$ref": "#/$defs/stageBase" }, { "properties": { "stage": { "const": "deployment" }, "status": { "enum": ["pending", "deployed", "failed", "rolled_back"] } } }] },
+    "liveReadbackStage": { "allOf": [{ "$ref": "#/$defs/stageBase" }, { "properties": { "stage": { "const": "live_readback" }, "status": { "enum": ["pending", "passed", "failed"] } } }] },
+    "productAcceptanceStage": { "allOf": [{ "$ref": "#/$defs/stageBase" }, { "properties": { "stage": { "const": "product_acceptance" }, "status": { "enum": ["pending", "accepted", "rejected", "deferred"] } } }] }
+  }
+}

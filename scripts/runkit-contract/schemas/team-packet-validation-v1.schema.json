@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-packet-validation-v1.schema.json",
+  "title": "OwlCoda RunKit Team Packet Validation V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "packetKind", "packetSchemaVersion", "issueCodes", "authorityBoundary", "authorizationGranted", "exitCode"],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamPacketValidationV1" },
+    "status": { "enum": ["team_packet_valid", "team_packet_invalid"] },
+    "packetKind": { "enum": ["task", "acceptance", "transfer", "unknown"] },
+    "packetSchemaVersion": { "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }] },
+    "issueCodes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "authorityBoundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["agentDispatch", "git", "release", "deployment", "production", "business", "automation", "money"],
+      "properties": { "agentDispatch": { "const": false }, "git": { "const": false }, "release": { "const": false }, "deployment": { "const": false }, "production": { "const": false }, "business": { "const": false }, "automation": { "const": false }, "money": { "const": false } }
+    },
+    "authorizationGranted": { "const": false },
+    "exitCode": { "enum": [0, 2] }
+  },
+  "allOf": [{
+    "if": { "properties": { "status": { "const": "team_packet_valid" } }, "required": ["status"] },
+    "then": { "properties": { "issueCodes": { "maxItems": 0 }, "exitCode": { "const": 0 } } },
+    "else": { "properties": { "issueCodes": { "minItems": 1 }, "exitCode": { "const": 2 } } }
+  }],
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitTeamPacketValidationV1", "status": "team_packet_valid",
+    "packetKind": "task", "packetSchemaVersion": "OwlCodaRunKitTeamTaskPacketV2", "issueCodes": [],
+    "authorityBoundary": { "agentDispatch": false, "git": false, "release": false, "deployment": false, "production": false, "business": false, "automation": false, "money": false },
+    "authorizationGranted": false, "exitCode": 0
+  }]
+}

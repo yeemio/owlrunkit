@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/project-completion-continuity-v1.schema.json",
+  "title": "OwlCoda RunKit Project Completion Continuity V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "status", "projectId", "projectTruthHash", "disposition",
+    "targetWorkspaceRef", "baseline", "current", "delta", "nextAction",
+    "readOnly", "writesPerformed", "authorityBoundary", "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitProjectCompletionContinuityV1" },
+    "status": { "enum": ["not_applicable", "baseline_missing", "source_unverifiable", "workspace_drift", "terminal"] },
+    "projectId": { "$ref": "#/$defs/text" },
+    "projectTruthHash": { "$ref": "#/$defs/hash" },
+    "disposition": {
+      "enum": [
+        "project_work_ledger_incomplete",
+        "completed_project_source_baseline_missing",
+        "completed_project_source_unverifiable",
+        "completed_project_with_unmodeled_workspace_drift",
+        "completed_project_terminal"
+      ]
+    },
+    "targetWorkspaceRef": { "$ref": "#/$defs/nullableText" },
+    "baseline": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "deliveryId", "occurredAt", "targetHead", "workspaceSnapshotFingerprint", "truthRef"],
+          "properties": {
+            "kind": { "const": "imported_source_delivery" },
+            "deliveryId": { "$ref": "#/$defs/text" },
+            "occurredAt": { "$ref": "#/$defs/text" },
+            "targetHead": { "$ref": "#/$defs/gitHash" },
+            "workspaceSnapshotFingerprint": { "$ref": "#/$defs/hashRef" },
+            "truthRef": { "$ref": "#/$defs/text" }
+          }
+        }
+      ]
+    },
+    "current": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["headCommit", "workspaceSnapshotFingerprint"],
+          "properties": {
+            "headCommit": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitHash" }] },
+            "workspaceSnapshotFingerprint": { "$ref": "#/$defs/hashRef" }
+          }
+        }
+      ]
+    },
+    "delta": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "baselineHead", "currentHead", "headChanged", "trackedTreeChanged",
+            "submodulesChanged", "committedPaths", "overlayPaths",
+            "dependencyEnvironmentPaths", "changedPaths", "changedPathCount",
+            "changedPathsTruncated", "pathEvidenceComplete"
+          ],
+          "properties": {
+            "baselineHead": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitHash" }] },
+            "currentHead": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/gitHash" }] },
+            "headChanged": { "type": "boolean" },
+            "trackedTreeChanged": { "type": "boolean" },
+            "submodulesChanged": { "type": "boolean" },
+            "committedPaths": { "$ref": "#/$defs/paths" },
+            "overlayPaths": { "$ref": "#/$defs/paths" },
+            "dependencyEnvironmentPaths": { "$ref": "#/$defs/paths" },
+            "changedPaths": { "$ref": "#/$defs/paths" },
+            "changedPathCount": { "type": "integer", "minimum": 0 },
+            "changedPathsTruncated": { "type": "boolean" },
+            "pathEvidenceComplete": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "nextAction": { "$ref": "#/$defs/nullableText" },
+    "readOnly": { "const": true },
+    "writesPerformed": { "const": false },
+    "authorityBoundary": { "$ref": "#/$defs/authorityBoundary" },
+    "authorizationGranted": { "const": false }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitProjectCompletionContinuityV1",
+      "status": "baseline_missing",
+      "projectId": "completed-project",
+      "projectTruthHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "disposition": "completed_project_source_baseline_missing",
+      "targetWorkspaceRef": null,
+      "baseline": null,
+      "current": null,
+      "delta": null,
+      "nextAction": "Review the current workspace and bind an explicit source baseline before deciding whether the project is terminal.",
+      "readOnly": true,
+      "writesPerformed": false,
+      "authorityBoundary": {
+        "agentDispatch": false,
+        "git": false,
+        "release": false,
+        "deployment": false,
+        "production": false,
+        "business": false,
+        "automation": false,
+        "money": false
+      },
+      "authorizationGranted": false
+    }
+  ],
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "hashRef": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "gitHash": { "type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$" },
+    "paths": { "type": "array", "maxItems": 256, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "authorityBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentDispatch", "git", "release", "deployment", "production", "business", "automation", "money"],
+      "properties": {
+        "agentDispatch": { "const": false },
+        "git": { "const": false },
+        "release": { "const": false },
+        "deployment": { "const": false },
+        "production": { "const": false },
+        "business": { "const": false },
+        "automation": { "const": false },
+        "money": { "const": false }
+      }
+    }
+  }
+}

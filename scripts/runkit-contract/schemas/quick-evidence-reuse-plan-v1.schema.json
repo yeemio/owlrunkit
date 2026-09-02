@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/quick-evidence-reuse-plan-v1.schema.json",
+  "title": "OwlCoda Quick Evidence Reuse Plan V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "exitCode",
+    "ready",
+    "baseReceipt",
+    "allowedPaths",
+    "actualDeltaPaths",
+    "outOfScopePaths",
+    "unusedAllowedPaths",
+    "currentSourceFingerprint",
+    "issues",
+    "reuseReceiptPath",
+    "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaQuickEvidenceReusePlanV1" },
+    "status": {
+      "enum": [
+        "quick_evidence_reuse_ready",
+        "quick_evidence_reuse_blocked",
+        "quick_evidence_reuse_not_needed"
+      ]
+    },
+    "exitCode": { "enum": [0, 2] },
+    "ready": { "type": "boolean" },
+    "baseReceipt": { "$ref": "#/$defs/baseReceipt" },
+    "allowedPaths": { "$ref": "#/$defs/paths" },
+    "actualDeltaPaths": { "$ref": "#/$defs/paths" },
+    "outOfScopePaths": { "$ref": "#/$defs/paths" },
+    "unusedAllowedPaths": { "$ref": "#/$defs/paths" },
+    "currentSourceFingerprint": { "$ref": "#/$defs/hash" },
+    "issues": { "type": "array", "items": { "type": "string" } },
+    "reuseReceiptPath": { "type": "null" },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "paths": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "baseReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receiptId", "path", "sha256", "sourceFingerprint", "attestationIssueCodes"],
+      "properties": {
+        "receiptId": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "sourceFingerprint": { "$ref": "#/$defs/hash" },
+        "attestationIssueCodes": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+      }
+    }
+  }
+}

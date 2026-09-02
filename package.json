@@ -1,0 +1,24 @@
+{
+  "name": "owlrunkit",
+  "version": "0.23.0",
+  "description": "Project Driver for cross-Agent project continuity and progression; execution, evidence, verification, and recovery are the underlying trust substrate.",
+  "license": "GPL-3.0-or-later",
+  "author": "yeemio <owlclaw@163.com>",
+  "type": "module",
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "bin": {
+    "owlrunkit": "scripts/runkit-contract/runkit-bootstrap.mjs",
+    "owlrunkit-attest": "packages/attest/cli/owlcoda-attest.mjs"
+  },
+  "exports": {
+    "./attest": "./packages/attest/src/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

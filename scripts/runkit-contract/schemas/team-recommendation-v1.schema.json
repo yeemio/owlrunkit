@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-recommendation-v1.schema.json",
+  "title": "OwlCoda RunKit Team Recommendation V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "status", "project", "recommendedMode", "continuity",
+    "coordination", "assurance", "reasonCodes", "rejectedLighterModes", "lanes",
+    "pathConflicts", "acceptanceGaps", "ownerTransitions", "estimatedOverhead",
+    "nextCommand", "dispatch", "authorityBoundary", "authorizationGranted", "exitCode"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamRecommendationV1" },
+    "status": { "const": "team_delivery_recommended" },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["present", "projectId", "projectTruthHash", "overall"],
+      "properties": {
+        "present": { "type": "boolean" },
+        "projectId": { "$ref": "#/$defs/nullableText" },
+        "projectTruthHash": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{64}$" }] },
+        "overall": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "recommendedMode": { "enum": ["off", "team"] },
+    "continuity": { "enum": ["none", "project_driver"] },
+    "coordination": { "enum": ["none", "project_driver_team"] },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changed", "selection", "reason"],
+      "properties": {
+        "changed": { "const": false },
+        "selection": { "const": "unchanged" },
+        "reason": { "const": "team_delivery_does_not_select_assurance" }
+      }
+    },
+    "reasonCodes": { "$ref": "#/$defs/strings" },
+    "rejectedLighterModes": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["mode", "reasonCodes"],
+        "properties": { "mode": { "const": "off" }, "reasonCodes": { "$ref": "#/$defs/nonemptyStrings" } }
+      }
+    },
+    "lanes": { "type": "array", "items": { "$ref": "#/$defs/lane" } },
+    "pathConflicts": { "type": "array", "items": { "$ref": "#/$defs/pathConflict" } },
+    "acceptanceGaps": { "type": "array", "items": { "$ref": "#/$defs/acceptanceGap" } },
+    "ownerTransitions": { "type": "array", "items": { "$ref": "#/$defs/ownerTransition" } },
+    "estimatedOverhead": {
+      "type": "object", "additionalProperties": false,
+      "required": ["additionalOperatorSteps", "potentialPortablePackets"],
+      "properties": {
+        "additionalOperatorSteps": { "type": "integer", "minimum": 0 },
+        "potentialPortablePackets": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "nextCommand": { "$ref": "#/$defs/nullableText" },
+    "dispatch": { "$ref": "#/$defs/dispatch" },
+    "authorityBoundary": { "$ref": "#/$defs/authorityBoundary" },
+    "authorizationGranted": { "const": false },
+    "exitCode": { "const": 0 }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "nonemptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "lane": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workItemId", "title", "status", "agentId", "dependencies", "unresolvedDependencies", "ownedPaths", "actionable", "parallelEligible", "coordinationFacts"],
+      "properties": {
+        "workItemId": { "$ref": "#/$defs/text" }, "title": { "$ref": "#/$defs/text" },
+        "status": { "$ref": "#/$defs/text" }, "agentId": { "$ref": "#/$defs/nullableText" },
+        "dependencies": { "$ref": "#/$defs/strings" }, "unresolvedDependencies": { "$ref": "#/$defs/strings" },
+        "ownedPaths": { "$ref": "#/$defs/nonemptyStrings" }, "actionable": { "type": "boolean" },
+        "parallelEligible": { "type": "boolean" }, "coordinationFacts": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "pathConflict": {
+      "type": "object", "additionalProperties": false,
+      "required": ["leftWorkItemId", "leftPath", "rightWorkItemId", "rightPath"],
+      "properties": { "leftWorkItemId": { "$ref": "#/$defs/text" }, "leftPath": { "$ref": "#/$defs/text" }, "rightWorkItemId": { "$ref": "#/$defs/text" }, "rightPath": { "$ref": "#/$defs/text" } }
+    },
+    "acceptanceGap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workItemId", "code", "message"],
+      "properties": { "workItemId": { "$ref": "#/$defs/text" }, "code": { "const": "verification_model_family_unbound" }, "message": { "$ref": "#/$defs/text" } }
+    },
+    "ownerTransition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workItemId", "facts"],
+      "properties": { "workItemId": { "$ref": "#/$defs/text" }, "facts": { "$ref": "#/$defs/nonemptyStrings" } }
+    },
+    "dispatch": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "permitted", "nextCommand"],
+      "properties": { "mode": { "const": "none" }, "permitted": { "const": false }, "nextCommand": { "type": "null" } }
+    },
+    "authorityBoundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["agentDispatch", "git", "release", "deployment", "production", "business", "automation", "money"],
+      "properties": { "agentDispatch": { "const": false }, "git": { "const": false }, "release": { "const": false }, "deployment": { "const": false }, "production": { "const": false }, "business": { "const": false }, "automation": { "const": false }, "money": { "const": false } }
+    }
+  },
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitTeamRecommendationV1", "status": "team_delivery_recommended",
+    "project": { "present": false, "projectId": null, "projectTruthHash": null, "overall": null },
+    "recommendedMode": "off", "continuity": "none", "coordination": "none",
+    "assurance": { "changed": false, "selection": "unchanged", "reason": "team_delivery_does_not_select_assurance" },
+    "reasonCodes": ["project_driver_not_initialized"], "rejectedLighterModes": [], "lanes": [],
+    "pathConflicts": [], "acceptanceGaps": [], "ownerTransitions": [],
+    "estimatedOverhead": { "additionalOperatorSteps": 0, "potentialPortablePackets": 0 },
+    "nextCommand": null, "dispatch": { "mode": "none", "permitted": false, "nextCommand": null },
+    "authorityBoundary": { "agentDispatch": false, "git": false, "release": false, "deployment": false, "production": false, "business": false, "automation": false, "money": false },
+    "authorizationGranted": false, "exitCode": 0
+  }]
+}

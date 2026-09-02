@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-delivery-status-v1.schema.json",
+  "title": "OwlCoda RunKit Team Delivery Status V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "status", "graphSource", "persistedTeamGraph", "projectId",
+    "projectTruthHash", "projectOverall", "recommendation", "lanes", "pathConflicts",
+    "acceptanceGaps", "ownerTransitions", "nextAction", "dispatch",
+    "authorityBoundary", "authorizationGranted", "exitCode"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamDeliveryStatusV1" },
+    "status": { "const": "team_delivery_status" },
+    "graphSource": { "const": "project_driver" },
+    "persistedTeamGraph": { "const": false },
+    "projectId": { "$ref": "#/$defs/nullableText" },
+    "projectTruthHash": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{64}$" }] },
+    "projectOverall": { "type": "string", "minLength": 1 },
+    "recommendation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["recommendedMode", "coordination", "reasonCodes"],
+      "properties": {
+        "recommendedMode": { "enum": ["off", "team"] },
+        "coordination": { "enum": ["none", "project_driver_team"] },
+        "reasonCodes": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "lanes": { "type": "array", "items": { "$ref": "#/$defs/lane" } },
+    "pathConflicts": { "type": "array", "items": { "$ref": "#/$defs/pathConflict" } },
+    "acceptanceGaps": { "type": "array", "items": { "$ref": "#/$defs/acceptanceGap" } },
+    "ownerTransitions": { "type": "array", "items": { "$ref": "#/$defs/ownerTransition" } },
+    "nextAction": { "$ref": "#/$defs/nullableText" },
+    "dispatch": { "$ref": "#/$defs/dispatch" },
+    "authorityBoundary": { "$ref": "#/$defs/authorityBoundary" },
+    "authorizationGranted": { "const": false },
+    "exitCode": { "const": 0 }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "nonemptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "lane": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workItemId", "title", "status", "agentId", "dependencies", "unresolvedDependencies", "ownedPaths", "actionable", "parallelEligible", "coordinationFacts"],
+      "properties": {
+        "workItemId": { "$ref": "#/$defs/text" }, "title": { "$ref": "#/$defs/text" },
+        "status": { "$ref": "#/$defs/text" }, "agentId": { "$ref": "#/$defs/nullableText" },
+        "dependencies": { "$ref": "#/$defs/strings" }, "unresolvedDependencies": { "$ref": "#/$defs/strings" },
+        "ownedPaths": { "$ref": "#/$defs/nonemptyStrings" }, "actionable": { "type": "boolean" },
+        "parallelEligible": { "type": "boolean" }, "coordinationFacts": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "pathConflict": { "type": "object", "additionalProperties": false, "required": ["leftWorkItemId", "leftPath", "rightWorkItemId", "rightPath"], "properties": { "leftWorkItemId": { "$ref": "#/$defs/text" }, "leftPath": { "$ref": "#/$defs/text" }, "rightWorkItemId": { "$ref": "#/$defs/text" }, "rightPath": { "$ref": "#/$defs/text" } } },
+    "acceptanceGap": { "type": "object", "additionalProperties": false, "required": ["workItemId", "code", "message"], "properties": { "workItemId": { "$ref": "#/$defs/text" }, "code": { "const": "verification_model_family_unbound" }, "message": { "$ref": "#/$defs/text" } } },
+    "ownerTransition": { "type": "object", "additionalProperties": false, "required": ["workItemId", "facts"], "properties": { "workItemId": { "$ref": "#/$defs/text" }, "facts": { "$ref": "#/$defs/nonemptyStrings" } } },
+    "dispatch": { "type": "object", "additionalProperties": false, "required": ["mode", "permitted", "nextCommand"], "properties": { "mode": { "const": "none" }, "permitted": { "const": false }, "nextCommand": { "type": "null" } } },
+    "authorityBoundary": { "type": "object", "additionalProperties": false, "required": ["agentDispatch", "git", "release", "deployment", "production", "business", "automation", "money"], "properties": { "agentDispatch": { "const": false }, "git": { "const": false }, "release": { "const": false }, "deployment": { "const": false }, "production": { "const": false }, "business": { "const": false }, "automation": { "const": false }, "money": { "const": false } } }
+  },
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitTeamDeliveryStatusV1", "status": "team_delivery_status",
+    "graphSource": "project_driver", "persistedTeamGraph": false, "projectId": null,
+    "projectTruthHash": null, "projectOverall": "not_initialized",
+    "recommendation": { "recommendedMode": "off", "coordination": "none", "reasonCodes": ["project_driver_not_initialized"] },
+    "lanes": [], "pathConflicts": [], "acceptanceGaps": [], "ownerTransitions": [], "nextAction": null,
+    "dispatch": { "mode": "none", "permitted": false, "nextCommand": null },
+    "authorityBoundary": { "agentDispatch": false, "git": false, "release": false, "deployment": false, "production": false, "business": false, "automation": false, "money": false },
+    "authorizationGranted": false, "exitCode": 0
+  }]
+}

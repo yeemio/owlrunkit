@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-delivery-status-v2.schema.json",
+  "title": "OwlCoda RunKit Team Delivery Status V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "status", "graphSource", "persistedTeamGraph", "projectId",
+    "projectTruthHash", "projectOverall", "recommendation", "lanes", "pathConflicts",
+    "acceptanceGaps", "ownerTransitions", "externalGates", "deliveryLifecycle",
+    "unmodeledCandidateLanes", "warnings", "warningSummary", "nextAction", "dispatch",
+    "authorityBoundary", "authorizationGranted", "exitCode"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamDeliveryStatusV2" },
+    "status": { "const": "team_delivery_status" },
+    "graphSource": { "const": "project_driver" },
+    "persistedTeamGraph": { "const": false },
+    "projectId": { "$ref": "#/$defs/nullableText" },
+    "projectTruthHash": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{64}$" }] },
+    "projectOverall": { "$ref": "#/$defs/text" },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recommendedMode", "coordination", "reasonCodes"],
+      "properties": {
+        "recommendedMode": { "enum": ["off", "team"] },
+        "coordination": { "enum": ["none", "project_driver_team"] },
+        "reasonCodes": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "lanes": { "type": "array", "items": { "$ref": "#/$defs/lane" } },
+    "pathConflicts": { "type": "array", "items": { "$ref": "#/$defs/pathConflict" } },
+    "acceptanceGaps": { "type": "array", "items": { "$ref": "#/$defs/acceptanceGap" } },
+    "ownerTransitions": { "type": "array", "items": { "$ref": "#/$defs/ownerTransition" } },
+    "externalGates": { "type": "array", "items": { "$ref": "#/$defs/externalGate" } },
+    "deliveryLifecycle": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/deliveryLifecycle" }] },
+    "unmodeledCandidateLanes": { "type": "array", "items": { "$ref": "#/$defs/candidateLane" } },
+    "warnings": { "type": "array", "items": { "$ref": "#/$defs/warning" } },
+    "warningSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "groups"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 0 },
+        "groups": { "type": "array", "items": { "$ref": "#/$defs/warningGroup" } }
+      }
+    },
+    "nextAction": { "$ref": "#/$defs/nullableText" },
+    "dispatch": { "$ref": "#/$defs/dispatch" },
+    "authorityBoundary": { "$ref": "#/$defs/authorityBoundary" },
+    "authorizationGranted": { "const": false },
+    "exitCode": { "const": 0 }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitTeamDeliveryStatusV2",
+      "status": "team_delivery_status",
+      "graphSource": "project_driver",
+      "persistedTeamGraph": false,
+      "projectId": null,
+      "projectTruthHash": null,
+      "projectOverall": "not_initialized",
+      "recommendation": {
+        "recommendedMode": "off",
+        "coordination": "none",
+        "reasonCodes": ["project_driver_not_initialized"]
+      },
+      "lanes": [],
+      "pathConflicts": [],
+      "acceptanceGaps": [],
+      "ownerTransitions": [],
+      "externalGates": [],
+      "deliveryLifecycle": null,
+      "unmodeledCandidateLanes": [],
+      "warnings": [],
+      "warningSummary": { "count": 0, "groups": [] },
+      "nextAction": null,
+      "dispatch": { "mode": "none", "permitted": false, "nextCommand": null },
+      "authorityBoundary": {
+        "agentDispatch": false,
+        "git": false,
+        "release": false,
+        "deployment": false,
+        "production": false,
+        "business": false,
+        "automation": false,
+        "money": false
+      },
+      "authorizationGranted": false,
+      "exitCode": 0
+    }
+  ],
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "nonemptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "stageName": { "enum": ["source", "integration", "materialization", "deployment", "live_readback", "product_acceptance"] },
+    "nullableStage": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/stageName" }] },
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workItemId", "title", "status", "agentId", "dependencies", "unresolvedDependencies", "ownedPaths", "actionable", "parallelEligible", "coordinationFacts"],
+      "properties": {
+        "workItemId": { "$ref": "#/$defs/text" },
+        "title": { "$ref": "#/$defs/text" },
+        "status": { "$ref": "#/$defs/text" },
+        "agentId": { "$ref": "#/$defs/nullableText" },
+        "dependencies": { "$ref": "#/$defs/strings" },
+        "unresolvedDependencies": { "$ref": "#/$defs/strings" },
+        "ownedPaths": { "$ref": "#/$defs/nonemptyStrings" },
+        "actionable": { "type": "boolean" },
+        "parallelEligible": { "type": "boolean" },
+        "coordinationFacts": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "pathConflict": { "type": "object", "additionalProperties": false, "required": ["leftWorkItemId", "leftPath", "rightWorkItemId", "rightPath"], "properties": { "leftWorkItemId": { "$ref": "#/$defs/text" }, "leftPath": { "$ref": "#/$defs/text" }, "rightWorkItemId": { "$ref": "#/$defs/text" }, "rightPath": { "$ref": "#/$defs/text" } } },
+    "acceptanceGap": { "type": "object", "additionalProperties": false, "required": ["workItemId", "code", "message"], "properties": { "workItemId": { "$ref": "#/$defs/text" }, "code": { "const": "verification_model_family_unbound" }, "message": { "$ref": "#/$defs/text" } } },
+    "ownerTransition": { "type": "object", "additionalProperties": false, "required": ["workItemId", "facts"], "properties": { "workItemId": { "$ref": "#/$defs/text" }, "facts": { "$ref": "#/$defs/nonemptyStrings" } } },
+    "externalGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "gateId", "title", "requiredFor", "gateStatus", "blocking", "ownerAgentId", "source", "summary", "evidenceRefs", "occurredAt", "truthRefs", "authorizationGranted"],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitExternalGateV1" },
+        "gateId": { "$ref": "#/$defs/text" },
+        "title": { "$ref": "#/$defs/text" },
+        "requiredFor": { "$ref": "#/$defs/stageName" },
+        "gateStatus": { "enum": ["pending", "passed", "blocked", "deferred"] },
+        "blocking": { "type": "boolean" },
+        "ownerAgentId": { "$ref": "#/$defs/text" },
+        "source": { "type": "object", "additionalProperties": false, "required": ["adapterId", "ref", "sha256"], "properties": { "adapterId": { "$ref": "#/$defs/text" }, "ref": { "$ref": "#/$defs/text" }, "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } } },
+        "summary": { "$ref": "#/$defs/text" },
+        "evidenceRefs": { "$ref": "#/$defs/nonemptyStrings" },
+        "occurredAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$" },
+        "truthRefs": { "$ref": "#/$defs/nonemptyStrings" },
+        "authorizationGranted": { "const": false }
+      }
+    },
+    "deliveryStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "status", "recordId", "ownerAgentId", "summary", "evidenceRefs", "externalGateIds", "occurredAt", "truthRef"],
+      "properties": {
+        "stage": { "$ref": "#/$defs/stageName" },
+        "status": { "enum": ["pending", "accepted", "rejected", "integrated", "materialized", "deployed", "failed", "rolled_back", "passed", "deferred"] },
+        "recordId": { "$ref": "#/$defs/nullableText" },
+        "ownerAgentId": { "$ref": "#/$defs/nullableText" },
+        "summary": { "$ref": "#/$defs/nullableText" },
+        "evidenceRefs": { "$ref": "#/$defs/strings" },
+        "externalGateIds": { "$ref": "#/$defs/strings" },
+        "occurredAt": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$" }] },
+        "truthRef": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "deliveryLifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "lifecycleStatus", "currentStage", "nextRequiredStage", "blockingStage", "blockingExternalGateIds", "stages", "authorizationGranted"],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitDeliveryLifecycleV1" },
+        "lifecycleStatus": { "enum": ["in_progress", "blocked", "completed"] },
+        "currentStage": { "enum": ["work_ledger_incomplete", "work_ledger_complete", "source_accepted", "integrated", "materialized", "deployed", "live_readback_passed", "product_accepted"] },
+        "nextRequiredStage": { "$ref": "#/$defs/nullableStage" },
+        "blockingStage": { "$ref": "#/$defs/nullableStage" },
+        "blockingExternalGateIds": { "$ref": "#/$defs/strings" },
+        "stages": { "type": "array", "minItems": 6, "maxItems": 6, "items": { "$ref": "#/$defs/deliveryStage" } },
+        "authorizationGranted": { "const": false }
+      }
+    },
+    "candidateLane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["laneId", "kind", "artifactId", "status", "sourceRef", "actionable", "modeledWorkItemId", "truthRefs"],
+      "properties": {
+        "laneId": { "$ref": "#/$defs/text" },
+        "kind": { "enum": ["data_candidate", "external_gate", "target_snapshot", "source_delivery"] },
+        "artifactId": { "$ref": "#/$defs/text" },
+        "status": { "$ref": "#/$defs/text" },
+        "sourceRef": { "$ref": "#/$defs/text" },
+        "actionable": { "type": "boolean" },
+        "modeledWorkItemId": { "$ref": "#/$defs/nullableText" },
+        "truthRefs": { "$ref": "#/$defs/nonemptyStrings" }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "workItemId", "message", "truthRefs", "severity", "blocking", "requiredAtGate", "recommendedAction"],
+      "properties": {
+        "code": { "const": "no_bound_verification_receipt" },
+        "workItemId": { "$ref": "#/$defs/text" },
+        "message": { "$ref": "#/$defs/text" },
+        "truthRefs": { "$ref": "#/$defs/nonemptyStrings" },
+        "severity": { "const": "warning" },
+        "blocking": { "const": false },
+        "requiredAtGate": { "const": false },
+        "recommendedAction": { "enum": ["no_retroactive_action_required", "bind_quick_or_formal_receipt_if_reusable_evidence_is_required"] }
+      }
+    },
+    "warningGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "blocking", "count", "workItemIds", "requiredAtGate", "recommendedAction"],
+      "properties": {
+        "code": { "const": "no_bound_verification_receipt" },
+        "severity": { "const": "warning" },
+        "blocking": { "const": false },
+        "count": { "type": "integer", "minimum": 1 },
+        "workItemIds": { "$ref": "#/$defs/nonemptyStrings" },
+        "requiredAtGate": { "const": false },
+        "recommendedAction": { "enum": ["no_retroactive_action_required", "bind_quick_or_formal_receipt_if_reusable_evidence_is_required", "review_individual_warning_actions"] }
+      }
+    },
+    "dispatch": { "type": "object", "additionalProperties": false, "required": ["mode", "permitted", "nextCommand"], "properties": { "mode": { "const": "none" }, "permitted": { "const": false }, "nextCommand": { "type": "null" } } },
+    "authorityBoundary": { "type": "object", "additionalProperties": false, "required": ["agentDispatch", "git", "release", "deployment", "production", "business", "automation", "money"], "properties": { "agentDispatch": { "const": false }, "git": { "const": false }, "release": { "const": false }, "deployment": { "const": false }, "production": { "const": false }, "business": { "const": false }, "automation": { "const": false }, "money": { "const": false } } }
+  }
+}

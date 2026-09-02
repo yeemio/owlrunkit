@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/efficiency-metrics-v1.json",
+  "title": "OwlCoda RunKit Efficiency Metrics V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "exitCode",
+    "telemetry",
+    "networkRequests",
+    "duplicateCommands",
+    "confirmedFalseBlocks",
+    "manualInterventions",
+    "handoffWait",
+    "timeToAcceptableResult",
+    "issueCodes",
+    "issues",
+    "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitEfficiencyMetricsV1" },
+    "status": { "enum": ["efficiency_metrics", "efficiency_metrics_invalid"] },
+    "exitCode": { "enum": [0, 3] },
+    "telemetry": { "const": false },
+    "networkRequests": { "const": 0 },
+    "duplicateCommands": { "$ref": "#/$defs/duplicateCommands" },
+    "confirmedFalseBlocks": { "$ref": "#/$defs/explicitCount" },
+    "manualInterventions": { "$ref": "#/$defs/explicitCount" },
+    "handoffWait": { "$ref": "#/$defs/handoffWait" },
+    "timeToAcceptableResult": { "$ref": "#/$defs/timeToAcceptable" },
+    "details": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "duplicateCommandGroups",
+        "workflowDurations",
+        "handoffSamples",
+        "inputRefs"
+      ],
+      "properties": {
+        "duplicateCommandGroups": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/duplicateCommandGroup" }
+        },
+        "workflowDurations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/workflowDuration" }
+        },
+        "handoffSamples": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/handoffSample" }
+        },
+        "inputRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "issueCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["invalid_quick_receipts_excluded", "efficiency_input_store_invalid"]
+      }
+    },
+    "issues": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "nonNegative": { "type": "integer", "minimum": 0 },
+    "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "duplicateCommands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repeatedExecutions", "groupCount", "basis"],
+      "properties": {
+        "repeatedExecutions": { "$ref": "#/$defs/nonNegative" },
+        "groupCount": { "$ref": "#/$defs/nonNegative" },
+        "basis": { "const": "quick_receipts_same_command_candidate_input_and_dependency" }
+      }
+    },
+    "explicitCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "basis"],
+      "properties": {
+        "count": { "$ref": "#/$defs/nonNegative" },
+        "basis": { "const": "explicit_events" }
+      }
+    },
+    "handoffWait": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completedHandoffs",
+        "unresolvedHandoffs",
+        "staleHandoffs",
+        "totalMs",
+        "averageMs",
+        "maxMs"
+      ],
+      "properties": {
+        "completedHandoffs": { "$ref": "#/$defs/nonNegative" },
+        "unresolvedHandoffs": { "$ref": "#/$defs/nonNegative" },
+        "staleHandoffs": { "$ref": "#/$defs/nonNegative" },
+        "totalMs": { "$ref": "#/$defs/nonNegative" },
+        "averageMs": { "$ref": "#/$defs/nonNegative" },
+        "maxMs": { "$ref": "#/$defs/nonNegative" }
+      }
+    },
+    "timeToAcceptable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "completedWorkflows",
+        "totalMs",
+        "averageMs",
+        "minMs",
+        "maxMs",
+        "latestMs"
+      ],
+      "properties": {
+        "status": { "enum": ["observed", "not_observed"] },
+        "completedWorkflows": { "$ref": "#/$defs/nonNegative" },
+        "totalMs": { "$ref": "#/$defs/nonNegative" },
+        "averageMs": { "$ref": "#/$defs/nonNegative" },
+        "minMs": { "$ref": "#/$defs/nonNegative" },
+        "maxMs": { "$ref": "#/$defs/nonNegative" },
+        "latestMs": { "$ref": "#/$defs/nonNegative" }
+      }
+    },
+    "duplicateCommandGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bindingFingerprint", "executions", "inputRefs"],
+      "properties": {
+        "bindingFingerprint": { "$ref": "#/$defs/hash" },
+        "executions": { "$ref": "#/$defs/nonNegative" },
+        "inputRefs": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "workflowDuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflowId", "startedAt", "acceptableResultAt", "durationMs"],
+      "properties": {
+        "workflowId": { "type": "string", "minLength": 1 },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "acceptableResultAt": { "type": "string", "format": "date-time" },
+        "durationMs": { "$ref": "#/$defs/nonNegative" }
+      }
+    },
+    "handoffSample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "handoffEventId",
+        "acceptedEventId",
+        "workItemId",
+        "durationMs",
+        "handoffRef",
+        "acceptedRef"
+      ],
+      "properties": {
+        "handoffEventId": { "type": "string", "minLength": 1 },
+        "acceptedEventId": { "type": "string", "minLength": 1 },
+        "workItemId": { "type": "string", "minLength": 1 },
+        "durationMs": { "$ref": "#/$defs/nonNegative" },
+        "handoffRef": { "type": "string", "minLength": 1 },
+        "acceptedRef": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitEfficiencyMetricsV1",
+    "status": "efficiency_metrics",
+    "exitCode": 0,
+    "telemetry": false,
+    "networkRequests": 0,
+    "duplicateCommands": {
+      "repeatedExecutions": 0,
+      "groupCount": 0,
+      "basis": "quick_receipts_same_command_candidate_input_and_dependency"
+    },
+    "confirmedFalseBlocks": { "count": 0, "basis": "explicit_events" },
+    "manualInterventions": { "count": 0, "basis": "explicit_events" },
+    "handoffWait": {
+      "completedHandoffs": 0,
+      "unresolvedHandoffs": 0,
+      "staleHandoffs": 0,
+      "totalMs": 0,
+      "averageMs": 0,
+      "maxMs": 0
+    },
+    "timeToAcceptableResult": {
+      "status": "not_observed",
+      "completedWorkflows": 0,
+      "totalMs": 0,
+      "averageMs": 0,
+      "minMs": 0,
+      "maxMs": 0,
+      "latestMs": 0
+    },
+    "issueCodes": [],
+    "issues": [],
+    "authorizationGranted": false
+  }]
+}

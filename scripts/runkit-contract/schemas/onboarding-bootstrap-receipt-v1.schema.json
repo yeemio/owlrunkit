@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/onboarding-bootstrap-receipt-v1.json",
+  "title": "OwlCoda RunKit Onboarding Bootstrap Receipt V1",
+  "oneOf": [
+    { "$ref": "#/$defs/success" },
+    { "$ref": "#/$defs/failure" }
+  ],
+  "$defs": {
+    "baseProperties": {
+      "schemaVersion": { "const": "OwlCodaRunKitOnboardingBootstrapReceiptV1" },
+      "exitCode": { "enum": [0, 2] },
+      "bootstrapId": {
+        "type": "string",
+        "pattern": "^bootstrap-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "planSha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+      "exactSpec": {
+        "type": "string",
+        "pattern": "^owlrunkit@[0-9]+\\.[0-9]+\\.[0-9]+$"
+      },
+      "startedAt": { "type": "string", "format": "date-time" },
+      "completedAt": { "type": "string", "format": "date-time" },
+      "completedSteps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "status"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "status": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "rollbackPerformed": { "type": "boolean" },
+      "rollbackOutcome": { "enum": ["not_required", "restored", "failed"] },
+      "authorizationGranted": { "const": false }
+    },
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "status",
+        "exitCode",
+        "bootstrapId",
+        "planSha256",
+        "exactSpec",
+        "startedAt",
+        "completedAt",
+        "completedSteps",
+        "profileStatus",
+        "adoptionStatus",
+        "doctorStatus",
+        "rollbackPerformed",
+        "rollbackOutcome",
+        "authorizationGranted"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitOnboardingBootstrapReceiptV1" },
+        "status": { "const": "bootstrapped" },
+        "exitCode": { "const": 0 },
+        "bootstrapId": { "$ref": "#/$defs/baseProperties/bootstrapId" },
+        "planSha256": { "$ref": "#/$defs/baseProperties/planSha256" },
+        "exactSpec": { "$ref": "#/$defs/baseProperties/exactSpec" },
+        "startedAt": { "$ref": "#/$defs/baseProperties/startedAt" },
+        "completedAt": { "$ref": "#/$defs/baseProperties/completedAt" },
+        "completedSteps": { "$ref": "#/$defs/baseProperties/completedSteps" },
+        "profileStatus": { "enum": ["profiles_already_current", "profiles_reconciled"] },
+        "adoptionStatus": { "enum": ["adopted", "ok"] },
+        "doctorStatus": { "const": "ready" },
+        "rollbackPerformed": { "const": false },
+        "rollbackOutcome": { "const": "not_required" },
+        "authorizationGranted": { "const": false }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "status",
+        "exitCode",
+        "bootstrapId",
+        "planSha256",
+        "exactSpec",
+        "startedAt",
+        "completedAt",
+        "completedSteps",
+        "failedStep",
+        "issueCodes",
+        "rollbackPerformed",
+        "rollbackOutcome",
+        "restoredPaths",
+        "authorizationGranted"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitOnboardingBootstrapReceiptV1" },
+        "status": { "const": "bootstrap_failed" },
+        "exitCode": { "const": 2 },
+        "bootstrapId": { "$ref": "#/$defs/baseProperties/bootstrapId" },
+        "planSha256": { "$ref": "#/$defs/baseProperties/planSha256" },
+        "exactSpec": { "$ref": "#/$defs/baseProperties/exactSpec" },
+        "startedAt": { "$ref": "#/$defs/baseProperties/startedAt" },
+        "completedAt": { "$ref": "#/$defs/baseProperties/completedAt" },
+        "completedSteps": { "$ref": "#/$defs/baseProperties/completedSteps" },
+        "failedStep": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1 }
+          ]
+        },
+        "issueCodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rollbackPerformed": { "const": true },
+        "rollbackOutcome": { "enum": ["restored", "failed"] },
+        "restoredPaths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "authorizationGranted": { "const": false }
+      }
+    }
+  }
+}

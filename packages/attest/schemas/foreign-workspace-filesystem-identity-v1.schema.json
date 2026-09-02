@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/trust/foreign-workspace-filesystem-identity-v1.schema.json",
+  "title": "OwlCoda RunKit Foreign Workspace Filesystem Identity V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "manifestAlgorithmId",
+    "workspaceRoot",
+    "excludedRoots",
+    "entryCount",
+    "totalFileBytes",
+    "ledgerByteLength",
+    "ledgerSha256",
+    "filesystemFingerprint"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitForeignWorkspaceFilesystemIdentityV1" },
+    "manifestAlgorithmId": { "const": "owlcoda-foreign-workspace-ledger-v1" },
+    "workspaceRoot": { "type": "string", "minLength": 1 },
+    "excludedRoots": { "const": [".git"] },
+    "entryCount": { "type": "integer", "minimum": 0 },
+    "totalFileBytes": { "type": "integer", "minimum": 0 },
+    "ledgerByteLength": { "type": "integer", "minimum": 2 },
+    "ledgerSha256": { "$ref": "#/$defs/hash" },
+    "filesystemFingerprint": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

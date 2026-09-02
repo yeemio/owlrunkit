@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/usage-mode-recommendation-v2.json",
+  "title": "OwlCoda RunKit Usage Mode Recommendation V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "requestedMode",
+    "recommendedMode",
+    "continuity",
+    "assurance",
+    "triggerReasons",
+    "rejectedLighterModes",
+    "estimatedOverhead",
+    "nextCommand",
+    "downgrade",
+    "authorityBoundary",
+    "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitUsageModeRecommendationV2" },
+    "status": { "enum": ["mode_recommended", "mode_status"] },
+    "requestedMode": { "enum": ["auto", "off", "light", "managed", "formal"] },
+    "recommendedMode": { "enum": ["off", "light", "managed", "formal"] },
+    "continuity": { "enum": ["none", "project_driver"] },
+    "assurance": { "enum": ["none", "quick", "formal"] },
+    "triggerReasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "rejectedLighterModes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["mode", "reasonCodes"],
+        "properties": {
+          "mode": { "enum": ["off", "light", "managed"] },
+          "reasonCodes": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "estimatedOverhead": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["additionalSteps", "evidenceArtifacts"],
+      "properties": {
+        "additionalSteps": { "type": "integer", "minimum": 0 },
+        "evidenceArtifacts": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "nextCommand": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1 }
+      ]
+    },
+    "downgrade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed", "reasonCodes"],
+      "properties": {
+        "allowed": { "type": "boolean" },
+        "reasonCodes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "authorityBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorizationGranted", "git", "release", "deployment", "production", "business"],
+      "properties": {
+        "authorizationGranted": { "const": false },
+        "git": { "const": false },
+        "release": { "const": false },
+        "deployment": { "const": false },
+        "production": { "const": false },
+        "business": { "const": false }
+      }
+    },
+    "authorizationGranted": { "const": false },
+    "preferenceSource": { "const": "default_auto" },
+    "persistedPreference": { "type": "null" }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitUsageModeRecommendationV2",
+      "status": "mode_recommended",
+      "requestedMode": "auto",
+      "recommendedMode": "managed",
+      "continuity": "project_driver",
+      "assurance": "quick",
+      "triggerReasons": ["cross_session_continuity", "single_bounded_verification"],
+      "rejectedLighterModes": [
+        {
+          "mode": "off",
+          "reasonCodes": ["cross_session_continuity", "single_bounded_verification"]
+        },
+        {
+          "mode": "light",
+          "reasonCodes": ["cross_session_continuity", "single_bounded_verification"]
+        }
+      ],
+      "estimatedOverhead": {
+        "additionalSteps": 3,
+        "evidenceArtifacts": 2
+      },
+      "nextCommand": "npx --no-install owlrunkit project status --workspace '.'",
+      "downgrade": {
+        "allowed": true,
+        "reasonCodes": []
+      },
+      "authorityBoundary": {
+        "authorizationGranted": false,
+        "git": false,
+        "release": false,
+        "deployment": false,
+        "production": false,
+        "business": false
+      },
+      "authorizationGranted": false
+    }
+  ]
+}

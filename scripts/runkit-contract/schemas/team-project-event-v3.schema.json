@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-project-event-v3.schema.json",
+  "title": "OwlCoda RunKit Team Project Event V3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "type",
+    "occurredAt",
+    "deliveryId",
+    "projectId",
+    "projectDefinitionSha256",
+    "assignmentId",
+    "workItemId",
+    "producerId",
+    "targetWorkspaceRef",
+    "targetHead",
+    "entrySnapshotRef",
+    "entrySnapshotSha256",
+    "deliveryPacketSha256",
+    "deliveryCandidateFingerprint",
+    "workspaceSnapshotFingerprint",
+    "overlayStatus",
+    "candidateFiles",
+    "changedPaths",
+    "toolCachePaths",
+    "dependencyEnvironmentPaths",
+    "unchangedPacketPaths",
+    "outOfScopeSourcePaths",
+    "targetSnapshot",
+    "proven",
+    "notProven",
+    "targetWritePerformed",
+    "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamProjectEventV3" },
+    "eventId": { "$ref": "#/$defs/id" },
+    "type": { "const": "source_delivery_imported" },
+    "occurredAt": { "type": "string", "minLength": 24 },
+    "deliveryId": { "$ref": "#/$defs/id" },
+    "projectId": { "$ref": "#/$defs/id" },
+    "projectDefinitionSha256": { "$ref": "#/$defs/sha256Ref" },
+    "assignmentId": { "$ref": "#/$defs/id" },
+    "workItemId": { "$ref": "#/$defs/id" },
+    "producerId": { "$ref": "#/$defs/id" },
+    "targetWorkspaceRef": { "type": "string", "minLength": 1 },
+    "targetHead": { "type": "string", "pattern": "^([a-f0-9]{40}|[a-f0-9]{64})$" },
+    "entrySnapshotRef": { "type": ["string", "null"] },
+    "entrySnapshotSha256": { "type": ["string", "null"], "pattern": "^sha256:[a-f0-9]{64}$" },
+    "deliveryPacketSha256": { "$ref": "#/$defs/sha256Ref" },
+    "deliveryCandidateFingerprint": { "$ref": "#/$defs/sha256" },
+    "workspaceSnapshotFingerprint": { "$ref": "#/$defs/sha256Ref" },
+    "overlayStatus": { "enum": ["candidate_only", "attested", "attested_with_non_source_changes"] },
+    "candidateFiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "changedPaths": { "$ref": "#/$defs/strings" },
+    "toolCachePaths": { "$ref": "#/$defs/strings" },
+    "dependencyEnvironmentPaths": { "$ref": "#/$defs/strings" },
+    "unchangedPacketPaths": { "$ref": "#/$defs/strings" },
+    "outOfScopeSourcePaths": { "type": "array", "maxItems": 0 },
+    "targetSnapshot": {
+      "$ref": "https://owlcoda.dev/schemas/runkit/trust/workspace-snapshot-v1.schema.json"
+    },
+    "proven": { "$ref": "#/$defs/nonEmptyStrings" },
+    "notProven": { "$ref": "#/$defs/nonEmptyStrings" },
+    "targetWritePerformed": { "const": false },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "sha256Ref": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "nonEmptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitTeamProjectEventV3",
+      "eventId": "source-delivery-delivery-1",
+      "type": "source_delivery_imported",
+      "occurredAt": "2026-08-12T08:02:00.000Z",
+      "deliveryId": "delivery-1",
+      "projectId": "external-delivery-project",
+      "projectDefinitionSha256": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "assignmentId": "assign-1",
+      "workItemId": "source-change",
+      "producerId": "luna-max",
+      "targetWorkspaceRef": "/workspace",
+      "targetHead": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entrySnapshotRef": null,
+      "entrySnapshotSha256": null,
+      "deliveryPacketSha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "deliveryCandidateFingerprint": "c851c3894a37a00c786719b252d2884606b28f2100bfc0e70acc32853b7ea720",
+      "workspaceSnapshotFingerprint": "sha256:ef3eb2c4af62ed5bf0c3fa9e46169fcf48204cc2e9580835f8849b94007a67f0",
+      "overlayStatus": "candidate_only",
+      "candidateFiles": [
+        {
+          "path": "src/main.mjs",
+          "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        }
+      ],
+      "changedPaths": [],
+      "toolCachePaths": [],
+      "dependencyEnvironmentPaths": [],
+      "unchangedPacketPaths": [],
+      "outOfScopeSourcePaths": [],
+      "targetSnapshot": {
+        "schemaVersion": "OwlCodaWorkspaceSnapshotV1",
+        "repositoryIdentity": "local:/workspace",
+        "headCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "trackedTreeIdentity": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "submodules": [],
+        "dirtyOverlay": [
+          {
+            "path": "src/main.mjs",
+            "state": "modified",
+            "sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          }
+        ],
+        "dependencyLockfiles": [],
+        "excludedRoots": [".owlcoda/runkit"],
+        "ignoredPathsBound": false,
+        "policyVersion": "workspace-snapshot-v1",
+        "sourceFingerprint": "sha256:ef3eb2c4af62ed5bf0c3fa9e46169fcf48204cc2e9580835f8849b94007a67f0"
+      },
+      "proven": ["The candidate file hashes match the target workspace."],
+      "notProven": ["Tests and integration were not proven."],
+      "targetWritePerformed": false,
+      "authorizationGranted": false
+    }
+  ]
+}

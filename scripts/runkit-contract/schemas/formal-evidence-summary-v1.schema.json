@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/formal-evidence-summary-v1.json",
+  "title": "OwlCoda RunKit Formal Evidence Summary V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "summaryId", "sourceBinding", "formalChecks", "supplementalEvidence", "staleFormalCheckCount", "staleSupplementalEvidenceCount", "formalAcceptanceDerivedOnlyFromFormalChecks", "limitations", "authorizationGranted", "evidenceSummarySha256"],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitFormalEvidenceSummaryV1" },
+    "runId": { "$ref": "#/$defs/id" },
+    "summaryId": { "$ref": "#/$defs/id" },
+    "sourceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidatePath", "candidateSha256", "sourceFingerprint"],
+      "properties": {
+        "candidatePath": { "type": "string", "minLength": 1 },
+        "candidateSha256": { "$ref": "#/$defs/prefixedHash" },
+        "sourceFingerprint": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "formalChecks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["checkId", "status", "failureCategory", "formalEligible", "snapshotPath", "envelopeReceiptPath"],
+        "properties": {
+          "checkId": { "$ref": "#/$defs/id" },
+          "status": { "enum": ["formal_check_passed", "formal_check_failed"] },
+          "failureCategory": {
+            "type": ["string", "null"],
+            "enum": [null, "source_check_failed", "envelope_capability_missing", "toolchain_resolution_failed", "network_policy_blocked"]
+          },
+          "formalEligible": { "type": "boolean" },
+          "snapshotPath": { "type": "string", "minLength": 1 },
+          "envelopeReceiptPath": { "type": ["string", "null"] }
+        },
+        "allOf": [{
+          "if": {
+            "properties": { "status": { "const": "formal_check_passed" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "failureCategory": { "const": null },
+              "formalEligible": { "const": true }
+            }
+          },
+          "else": {
+            "properties": {
+              "failureCategory": { "enum": ["source_check_failed", "envelope_capability_missing", "toolchain_resolution_failed", "network_policy_blocked"] },
+              "formalEligible": { "const": false }
+            }
+          }
+        }]
+      }
+    },
+    "supplementalEvidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidenceId", "kind", "classificationBasis", "evidencePath", "supplementalEvidenceSha256", "gating"],
+        "properties": {
+          "evidenceId": { "$ref": "#/$defs/id" },
+          "kind": { "enum": ["supplemental-local", "networked"] },
+          "classificationBasis": { "const": "operator_declared_not_attested" },
+          "evidencePath": { "type": "string", "minLength": 1 },
+          "supplementalEvidenceSha256": { "$ref": "#/$defs/hash" },
+          "gating": { "const": false }
+        }
+      }
+    },
+    "staleFormalCheckCount": { "type": "integer", "minimum": 0 },
+    "staleSupplementalEvidenceCount": { "type": "integer", "minimum": 0 },
+    "formalAcceptanceDerivedOnlyFromFormalChecks": { "const": true },
+    "limitations": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "authorizationGranted": { "const": false },
+    "evidenceSummarySha256": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "prefixedHash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitFormalEvidenceSummaryV1",
+      "runId": "release-001",
+      "summaryId": "formal-final-evidence",
+      "sourceBinding": {
+        "candidatePath": ".owlcoda/runkit/executions/release-001/source-candidates/quality.json",
+        "candidateSha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "sourceFingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "formalChecks": [{
+        "checkId": "quality",
+        "status": "formal_check_passed",
+        "failureCategory": null,
+        "formalEligible": true,
+        "snapshotPath": ".owlcoda/runkit/executions/release-001/snapshots/quality.json",
+        "envelopeReceiptPath": null
+      }],
+      "supplementalEvidence": [],
+      "staleFormalCheckCount": 0,
+      "staleSupplementalEvidenceCount": 0,
+      "formalAcceptanceDerivedOnlyFromFormalChecks": true,
+      "limitations": ["supplemental_evidence_is_non_gating"],
+      "authorizationGranted": false,
+      "evidenceSummarySha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/inspect-compact-v2.schema.json",
+  "title": "OwlCoda RunKit Inspect Compact V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "status", "exitCode", "projectTruthHash", "progress",
+    "dominantGap", "ownerAgentId", "nextAction", "lifecycleNextAction",
+    "projectNextAction", "maintenanceNextAction", "projectWarnings",
+    "maintenanceWarnings", "skillDriftWarnings", "advisorySummary",
+    "warningSummary", "execution", "authorityBoundary", "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitInspectCompactV2" },
+    "status": { "const": "inspected_compact" },
+    "exitCode": { "enum": [0, 2] },
+    "projectTruthHash": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/hash" }] },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overall", "completedWorkItems", "totalWorkItems"],
+      "properties": {
+        "overall": { "$ref": "#/$defs/nullableText" },
+        "completedWorkItems": { "$ref": "#/$defs/nullableCount" },
+        "totalWorkItems": { "$ref": "#/$defs/nullableCount" }
+      }
+    },
+    "dominantGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "reason"],
+      "properties": {
+        "code": { "$ref": "#/$defs/text" },
+        "reason": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "ownerAgentId": { "$ref": "#/$defs/nullableText" },
+    "nextAction": { "$ref": "#/$defs/text" },
+    "lifecycleNextAction": { "$ref": "#/$defs/text" },
+    "projectNextAction": { "$ref": "#/$defs/nullableText" },
+    "maintenanceNextAction": { "$ref": "#/$defs/nullableText" },
+    "projectWarnings": { "$ref": "#/$defs/warningSummary" },
+    "maintenanceWarnings": { "$ref": "#/$defs/warningSummary" },
+    "skillDriftWarnings": { "$ref": "#/$defs/warningSummary" },
+    "advisorySummary": { "$ref": "#/$defs/warningSummary" },
+    "warningSummary": { "$ref": "#/$defs/warningSummary" },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "openCount", "activeLeaseCount"],
+      "properties": {
+        "state": { "$ref": "#/$defs/text" },
+        "openCount": { "type": "integer", "minimum": 0 },
+        "activeLeaseCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "authorityBoundary": { "$ref": "#/$defs/authorityBoundary" },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "nullableCount": { "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 0 }] },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "warningSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "groups"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 0 },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "count", "blocking", "recommendedAction"],
+            "properties": {
+              "code": { "$ref": "#/$defs/text" },
+              "count": { "type": "integer", "minimum": 1 },
+              "blocking": { "type": "boolean" },
+              "recommendedAction": { "$ref": "#/$defs/text" }
+            }
+          }
+        }
+      }
+    },
+    "authorityBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git", "release", "deployment", "production", "business"],
+      "properties": {
+        "git": { "const": false },
+        "release": { "const": false },
+        "deployment": { "const": false },
+        "production": { "const": false },
+        "business": { "const": false }
+      }
+    }
+  },
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitInspectCompactV2",
+    "status": "inspected_compact",
+    "exitCode": 0,
+    "projectTruthHash": null,
+    "progress": { "overall": null, "completedWorkItems": null, "totalWorkItems": null },
+    "dominantGap": { "code": "plan_new_execution", "reason": null },
+    "ownerAgentId": null,
+    "nextAction": "plan_new_execution",
+    "lifecycleNextAction": "plan_new_execution",
+    "projectNextAction": null,
+    "maintenanceNextAction": null,
+    "projectWarnings": { "count": 0, "groups": [] },
+    "maintenanceWarnings": { "count": 0, "groups": [] },
+    "skillDriftWarnings": { "count": 0, "groups": [] },
+    "advisorySummary": { "count": 0, "groups": [] },
+    "warningSummary": { "count": 0, "groups": [] },
+    "execution": { "state": "no_active_execution", "openCount": 0, "activeLeaseCount": 0 },
+    "authorityBoundary": { "git": false, "release": false, "deployment": false, "production": false, "business": false },
+    "authorizationGranted": false
+  }]
+}

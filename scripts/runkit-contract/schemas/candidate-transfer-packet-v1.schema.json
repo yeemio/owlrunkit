@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/candidate-transfer-packet-v1.schema.json",
+  "title": "OwlCoda RunKit Candidate Transfer Packet V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "packetId", "projectBinding", "gateId", "workItemId",
+    "candidateId", "candidateSha256", "baseSha", "head", "branch", "worktree",
+    "dirtyManifestSha256", "patchBundleRef", "snapshotRef", "reconstructionRefs",
+    "protectedArtifacts", "previousOwner", "nextOwner", "lifecycle", "handoffAck",
+    "verificationStatus", "authorityBoundary", "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitCandidateTransferPacketV1" },
+    "packetId": { "$ref": "#/$defs/id" },
+    "projectBinding": { "$ref": "#/$defs/projectBinding" },
+    "gateId": { "$ref": "#/$defs/id" },
+    "workItemId": { "$ref": "#/$defs/id" },
+    "candidateId": { "$ref": "#/$defs/id" },
+    "candidateSha256": { "$ref": "#/$defs/sha256Ref" },
+    "baseSha": { "$ref": "#/$defs/gitRef" },
+    "head": { "$ref": "#/$defs/gitRef" },
+    "branch": { "$ref": "#/$defs/text" },
+    "worktree": { "$ref": "#/$defs/absolutePath" },
+    "dirtyManifestSha256": { "$ref": "#/$defs/sha256Ref" },
+    "patchBundleRef": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/artifactSha256Ref" }] },
+    "snapshotRef": { "$ref": "#/$defs/artifactSha256Ref" },
+    "reconstructionRefs": { "$ref": "#/$defs/nonemptyStrings" },
+    "protectedArtifacts": { "$ref": "#/$defs/strings" },
+    "previousOwner": { "$ref": "#/$defs/id" },
+    "nextOwner": { "$ref": "#/$defs/id" },
+    "lifecycle": { "enum": ["candidate_active", "transfer_requested", "packet_generated", "new_owner_validation", "handoff_ack", "old_writer_release"] },
+    "handoffAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "agent", "occurredAt", "evidenceRefs"],
+      "properties": {
+        "status": { "enum": ["pending", "accepted", "rejected"] },
+        "agent": { "$ref": "#/$defs/nullableText" },
+        "occurredAt": { "$ref": "#/$defs/nullableIsoUtc" },
+        "evidenceRefs": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "verificationStatus": { "enum": ["source_candidate_unverified", "source_candidate_verified", "accepted", "rework_required"] },
+    "authorityBoundary": { "$ref": "#/$defs/authorityBoundary" },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "nullableIsoUtc": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$" }] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "nonemptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "sha256Ref": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "artifactSha256Ref": { "type": "string", "pattern": "^artifact:sha256:[a-f0-9]{64}$" },
+    "gitRef": { "type": "string", "pattern": "^git:[a-f0-9]{40}([a-f0-9]{24})?$" },
+    "absolutePath": { "type": "string", "pattern": "^(?:/|[A-Za-z]:[\\\\/]|\\\\\\\\)" },
+    "projectBinding": { "type": "object", "additionalProperties": false, "required": ["projectId", "projectTruthHash"], "properties": { "projectId": { "$ref": "#/$defs/id" }, "projectTruthHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } },
+    "authorityBoundary": { "type": "object", "additionalProperties": false, "required": ["agentDispatch", "git", "release", "deployment", "production", "business", "automation", "money"], "properties": { "agentDispatch": { "const": false }, "git": { "const": false }, "release": { "const": false }, "deployment": { "const": false }, "production": { "const": false }, "business": { "const": false }, "automation": { "const": false }, "money": { "const": false } } }
+  },
+  "allOf": [{
+    "if": {
+      "properties": { "lifecycle": { "enum": ["handoff_ack", "old_writer_release"] } },
+      "required": ["lifecycle"]
+    },
+    "then": {
+      "properties": {
+        "handoffAck": {
+          "properties": {
+            "status": { "const": "accepted" },
+            "agent": { "$ref": "#/$defs/text" },
+            "occurredAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$" },
+            "evidenceRefs": { "minItems": 1 }
+          }
+        }
+      }
+    }
+  }],
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitCandidateTransferPacketV1", "packetId": "transfer-packet-001",
+    "projectBinding": { "projectId": "team-phase1", "projectTruthHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+    "gateId": "ready", "workItemId": "work-1", "candidateId": "candidate-001",
+    "candidateSha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "baseSha": "git:2222222222222222222222222222222222222222", "head": "git:3333333333333333333333333333333333333333",
+    "branch": "codex/team-a", "worktree": "/workspace/team-a",
+    "dirtyManifestSha256": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "patchBundleRef": "artifact:sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "snapshotRef": "artifact:sha256:6666666666666666666666666666666666666666666666666666666666666666",
+    "reconstructionRefs": ["git:2222222222222222222222222222222222222222"], "protectedArtifacts": ["docs/contract.md"],
+    "previousOwner": "agent-a", "nextOwner": "agent-b", "lifecycle": "handoff_ack",
+    "handoffAck": { "status": "accepted", "agent": "agent-b", "occurredAt": "2026-08-13T08:00:00.000Z", "evidenceRefs": ["receipt:transfer-001"] },
+    "verificationStatus": "source_candidate_unverified",
+    "authorityBoundary": { "agentDispatch": false, "git": false, "release": false, "deployment": false, "production": false, "business": false, "automation": false, "money": false },
+    "authorizationGranted": false
+  }]
+}

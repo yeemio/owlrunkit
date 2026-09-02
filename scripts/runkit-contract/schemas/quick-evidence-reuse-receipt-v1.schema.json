@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/quick-evidence-reuse-receipt-v1.schema.json",
+  "title": "OwlCoda Quick Evidence Reuse Receipt V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reuseId",
+    "baseReceipt",
+    "delta",
+    "decision",
+    "reasonCodes",
+    "proven",
+    "notProven",
+    "createdAt",
+    "authorizationGranted",
+    "receiptSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaQuickEvidenceReuseReceiptV1" },
+    "reuseId": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+    "baseReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receiptId", "path", "sha256", "sourceFingerprint", "attestationIssueCodes"],
+      "properties": {
+        "receiptId": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "sourceFingerprint": { "$ref": "#/$defs/hash" },
+        "attestationIssueCodes": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+      }
+    },
+    "delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowedPaths",
+        "actualPaths",
+        "unusedAllowedPaths",
+        "currentSourceFingerprint",
+        "receiptId",
+        "receiptPath",
+        "receiptSha256",
+        "command"
+      ],
+      "properties": {
+        "allowedPaths": { "$ref": "#/$defs/paths" },
+        "actualPaths": { "$ref": "#/$defs/paths" },
+        "unusedAllowedPaths": { "$ref": "#/$defs/paths" },
+        "currentSourceFingerprint": { "$ref": "#/$defs/hash" },
+        "receiptId": { "type": "string", "minLength": 1 },
+        "receiptPath": { "type": "string", "minLength": 1 },
+        "receiptSha256": { "$ref": "#/$defs/hash" },
+        "command": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["executable", "argv"],
+          "properties": {
+            "executable": { "type": "string", "minLength": 1 },
+            "argv": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "decision": { "enum": ["accepted", "rejected"] },
+    "reasonCodes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "proven": { "type": "array", "minItems": 2, "items": { "type": "string", "minLength": 1 } },
+    "notProven": { "type": "array", "minItems": 2, "items": { "type": "string", "minLength": 1 } },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "authorizationGranted": { "const": false },
+    "receiptSha256": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "paths": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  }
+}

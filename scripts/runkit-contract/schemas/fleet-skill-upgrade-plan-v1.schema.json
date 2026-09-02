@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.dev/schemas/runkit/fleet-skill-upgrade-plan-v1.schema.json",
+  "title": "OwlCoda RunKit Fleet Skill Upgrade Plan V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "expectedCore", "sharedSkill", "discovery", "affectedProjects", "blockers", "commands", "authorizationGranted"],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitFleetSkillUpgradePlanV1" },
+    "status": { "enum": ["ready", "blocked"] },
+    "expectedCore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractVersion", "coreVersion", "coreManifestSha256", "coreSourceRef"],
+      "properties": {
+        "contractVersion": { "const": "0.2" },
+        "coreVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "coreManifestSha256": { "$ref": "#/$defs/sha256" },
+        "coreSourceRef": { "type": "string", "pattern": "^artifact:sha256:[a-f0-9]{64}$" }
+      }
+    },
+    "sharedSkill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetRoot", "status", "installedSkillVersion", "installedConfigCoreVersion", "issues"],
+      "properties": {
+        "targetRoot": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["missing", "unmanaged", "drifted", "version_mismatch", "valid"] },
+        "installedSkillVersion": { "type": ["string", "null"] },
+        "installedConfigCoreVersion": { "type": ["string", "null"] },
+        "issues": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "discovery": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "complete", "workspaceCount", "unreachableRoots"],
+          "properties": {
+            "source": { "type": "string", "minLength": 1 },
+            "complete": { "type": "boolean" },
+            "workspaceCount": { "type": "integer", "minimum": 0 },
+            "unreachableRoots": { "$ref": "#/$defs/strings" },
+            "issues": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["code", "path", "coverageRoot"],
+                "properties": {
+                  "code": { "type": "string", "minLength": 1 },
+                  "path": { "type": "string", "minLength": 1 },
+                  "coverageRoot": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "affectedProjects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["workspaceRoot", "configPath", "configCoreVersion", "activeRunIds", "activeLeaseIds", "upgradeSafe"],
+        "properties": {
+          "workspaceRoot": { "type": "string", "minLength": 1 },
+          "configPath": { "type": "string", "minLength": 1 },
+          "configCoreVersion": { "type": ["string", "null"] },
+          "activeRunIds": { "$ref": "#/$defs/strings" },
+          "activeLeaseIds": { "$ref": "#/$defs/strings" },
+          "upgradeSafe": { "type": "boolean" }
+        }
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code"],
+        "properties": {
+          "code": { "type": "string", "minLength": 1 },
+          "workspaceRoot": { "type": "string", "minLength": 1 },
+          "artifactId": { "type": "string", "minLength": 1 },
+          "detail": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dryRun", "install", "rollback"],
+      "properties": {
+        "dryRun": { "type": "string", "minLength": 1 },
+        "install": { "type": "string", "minLength": 1 },
+        "rollback": { "type": "string", "minLength": 1 }
+      }
+    },
+    "authorizationGranted": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "ready" } }, "required": ["status"] },
+      "then": { "properties": { "blockers": { "maxItems": 0 } } },
+      "else": { "properties": { "blockers": { "minItems": 1 } } }
+    }
+  ],
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitFleetSkillUpgradePlanV1",
+      "status": "blocked",
+      "expectedCore": {
+        "contractVersion": "0.2",
+        "coreVersion": "0.23.0",
+        "coreManifestSha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "coreSourceRef": "artifact:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "sharedSkill": {
+        "targetRoot": "/opt/codex/skills/owlcoda-runkit",
+        "status": "version_mismatch",
+        "installedSkillVersion": "0.20.0",
+        "installedConfigCoreVersion": "0.20.0",
+        "issues": ["installed_skill_core_version_mismatch"]
+      },
+      "discovery": { "source": "fleet_registry", "complete": true, "workspaceCount": 1, "unreachableRoots": [], "issues": [] },
+      "affectedProjects": [
+        {
+          "workspaceRoot": "/projects/example",
+          "configPath": "/projects/example/.owlcoda/runkit/config.json",
+          "configCoreVersion": "0.20.0",
+          "activeRunIds": ["active-run"],
+          "activeLeaseIds": [],
+          "upgradeSafe": false
+        }
+      ],
+      "blockers": [{ "code": "active_execution", "workspaceRoot": "/projects/example", "artifactId": "active-run" }],
+      "commands": {
+        "dryRun": "npx --no-install owlrunkit fleet skill-plan ...",
+        "install": "node install-codex-skill.mjs install ...",
+        "rollback": "node install-codex-skill.mjs restore ..."
+      },
+      "authorizationGranted": false
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  }
+}

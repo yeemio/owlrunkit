@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-task-packet-v2.schema.json",
+  "title": "OwlCoda RunKit Team Task Packet V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "packetId", "projectBinding", "gateId", "observableSuccess",
+    "workItem", "actor", "risk", "acceptance", "entry", "scope", "evidence",
+    "verificationCadence", "handoff", "escalationBudget", "stop",
+    "authorityBoundary", "authorizationGranted"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamTaskPacketV2" },
+    "packetId": { "$ref": "#/$defs/id" },
+    "projectBinding": { "$ref": "#/$defs/projectBinding" },
+    "gateId": { "$ref": "#/$defs/id" },
+    "observableSuccess": { "$ref": "#/$defs/text" },
+    "workItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workItemId", "title", "dependencies", "ownedPaths"],
+      "properties": {
+        "workItemId": { "$ref": "#/$defs/id" },
+        "title": { "$ref": "#/$defs/text" },
+        "dependencies": { "$ref": "#/$defs/strings" },
+        "ownedPaths": { "$ref": "#/$defs/nonemptyStrings" }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executingAgent", "modelFamily", "modelVersion", "role"],
+      "properties": {
+        "executingAgent": { "$ref": "#/$defs/id" },
+        "modelFamily": { "$ref": "#/$defs/text" },
+        "modelVersion": { "$ref": "#/$defs/text" },
+        "role": { "$ref": "#/$defs/text" }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "productJudgment", "semanticAmbiguity", "contextDepth", "surfaceWidth",
+        "determinism", "secondOrderRisk", "authoritySpan"
+      ],
+      "properties": {
+        "productJudgment": { "enum": ["low", "medium", "high"] },
+        "semanticAmbiguity": { "enum": ["low", "medium", "high"] },
+        "contextDepth": { "enum": ["local", "cross-module", "product-wide"] },
+        "surfaceWidth": { "enum": ["narrow", "multi-module", "product-wide"] },
+        "determinism": { "enum": ["deterministic", "mixed", "exploratory"] },
+        "secondOrderRisk": { "enum": ["low", "medium", "high"] },
+        "authoritySpan": { "enum": ["source-only", "integration", "runtime", "production"] }
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiredLevel", "implementationModelFamily", "implementationModelVersion",
+        "verificationModelFamily", "verificationModelVersion", "sameFamilyAllowed",
+        "freshAdversarialFamilies"
+      ],
+      "properties": {
+        "requiredLevel": { "$ref": "#/$defs/acceptanceLevel" },
+        "implementationModelFamily": { "$ref": "#/$defs/text" },
+        "implementationModelVersion": { "$ref": "#/$defs/text" },
+        "verificationModelFamily": { "$ref": "#/$defs/text" },
+        "verificationModelVersion": { "$ref": "#/$defs/text" },
+        "sameFamilyAllowed": { "type": "boolean" },
+        "freshAdversarialFamilies": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worktreeMode", "worktree", "branch", "baseSha", "candidateIdentity",
+        "dirtyStateManifest", "soleWriter", "upstreamAcceptedPackets"
+      ],
+      "properties": {
+        "worktreeMode": { "enum": ["new_clean_worktree", "existing_dirty_candidate"] },
+        "worktree": { "$ref": "#/$defs/absolutePath" },
+        "branch": { "$ref": "#/$defs/text" },
+        "baseSha": { "$ref": "#/$defs/gitRef" },
+        "candidateIdentity": { "$ref": "#/$defs/sha256Ref" },
+        "dirtyStateManifest": { "$ref": "#/$defs/sha256Ref" },
+        "soleWriter": { "$ref": "#/$defs/id" },
+        "upstreamAcceptedPackets": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowedChangedPaths", "prohibitedPathsAndActions", "protectedArtifactsAndAuthority"],
+      "properties": {
+        "allowedChangedPaths": { "$ref": "#/$defs/nonemptyStrings" },
+        "prohibitedPathsAndActions": { "$ref": "#/$defs/strings" },
+        "protectedArtifactsAndAuthority": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["positiveEvidence", "negativeAndSecondOrderTests", "deliveryPacketFields"],
+      "properties": {
+        "positiveEvidence": { "$ref": "#/$defs/strings" },
+        "negativeAndSecondOrderTests": { "$ref": "#/$defs/strings" },
+        "deliveryPacketFields": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "verificationCadence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "microBatchId", "closureHypothesis", "includedChanges", "implementationSmoke",
+        "frozenCandidateFocusedGate", "candidateCloseoutChecks", "independentAdversarialDelta",
+        "deferredTransitionGates", "trustedReceipts", "receiptInvalidationTriggers"
+      ],
+      "properties": {
+        "microBatchId": { "$ref": "#/$defs/id" },
+        "closureHypothesis": { "$ref": "#/$defs/text" },
+        "includedChanges": { "$ref": "#/$defs/strings" },
+        "implementationSmoke": { "$ref": "#/$defs/strings" },
+        "frozenCandidateFocusedGate": { "$ref": "#/$defs/strings" },
+        "candidateCloseoutChecks": { "$ref": "#/$defs/strings" },
+        "independentAdversarialDelta": { "$ref": "#/$defs/strings" },
+        "deferredTransitionGates": { "$ref": "#/$defs/strings" },
+        "trustedReceipts": { "$ref": "#/$defs/strings" },
+        "receiptInvalidationTriggers": { "$ref": "#/$defs/strings" }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "nextOwner"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "nextOwner": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "escalationBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["implementationAttempts", "narrowRework", "harnessFailure", "controllerIntervention", "semanticEscape"],
+      "properties": {
+        "implementationAttempts": { "type": "integer", "minimum": 1 },
+        "narrowRework": { "type": "integer", "minimum": 0 },
+        "harnessFailure": { "type": "integer", "minimum": 0 },
+        "controllerIntervention": { "type": "integer", "minimum": 0 },
+        "semanticEscape": { "const": 0 }
+      }
+    },
+    "stop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exactStopPoint", "nextGateProhibited"],
+      "properties": {
+        "exactStopPoint": { "$ref": "#/$defs/text" },
+        "nextGateProhibited": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "authorityBoundary": { "$ref": "#/$defs/authorityBoundary" },
+    "authorizationGranted": { "const": false }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "nonemptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "sha256Ref": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "gitRef": { "type": "string", "pattern": "^git:[a-f0-9]{40}([a-f0-9]{24})?$" },
+    "absolutePath": { "type": "string", "pattern": "^(?:/|[A-Za-z]:[\\\\/]|\\\\\\\\)" },
+    "acceptanceLevel": { "enum": ["L0", "L1", "L2", "L3"] },
+    "projectBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projectId", "projectTruthHash"],
+      "properties": {
+        "projectId": { "$ref": "#/$defs/id" },
+        "projectTruthHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "authorityBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentDispatch", "git", "release", "deployment", "production", "business", "automation", "money"],
+      "properties": {
+        "agentDispatch": { "const": false }, "git": { "const": false },
+        "release": { "const": false }, "deployment": { "const": false },
+        "production": { "const": false }, "business": { "const": false },
+        "automation": { "const": false }, "money": { "const": false }
+      }
+    }
+  },
+  "allOf": [{
+    "if": {
+      "properties": { "risk": { "properties": { "secondOrderRisk": { "enum": ["medium", "high"] } } } },
+      "required": ["risk"]
+    },
+    "then": {
+      "properties": { "acceptance": { "properties": { "sameFamilyAllowed": { "const": false } } } }
+    }
+  }],
+  "examples": [{
+    "schemaVersion": "OwlCodaRunKitTeamTaskPacketV2",
+    "packetId": "task-packet-001",
+    "projectBinding": { "projectId": "team-phase1", "projectTruthHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+    "gateId": "ready",
+    "observableSuccess": "One source candidate is ready for independent acceptance.",
+    "workItem": { "workItemId": "work-1", "title": "Implement Team Delivery", "dependencies": [], "ownedPaths": ["scripts/runkit-contract/**"] },
+    "actor": { "executingAgent": "agent-a", "modelFamily": "provider:family-a", "modelVersion": "model-a-1", "role": "implementation" },
+    "risk": { "productJudgment": "medium", "semanticAmbiguity": "medium", "contextDepth": "cross-module", "surfaceWidth": "narrow", "determinism": "deterministic", "secondOrderRisk": "medium", "authoritySpan": "source-only" },
+    "acceptance": { "requiredLevel": "L1", "implementationModelFamily": "provider:family-a", "implementationModelVersion": "model-a-1", "verificationModelFamily": "provider:family-b", "verificationModelVersion": "model-b-1", "sameFamilyAllowed": false, "freshAdversarialFamilies": ["authority boundary"] },
+    "entry": { "worktreeMode": "new_clean_worktree", "worktree": "/workspace/team-a", "branch": "codex/team-a", "baseSha": "git:1111111111111111111111111111111111111111", "candidateIdentity": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "dirtyStateManifest": "sha256:3333333333333333333333333333333333333333333333333333333333333333", "soleWriter": "agent-a", "upstreamAcceptedPackets": [] },
+    "scope": { "allowedChangedPaths": ["scripts/runkit-contract/**"], "prohibitedPathsAndActions": ["git push", "deploy"], "protectedArtifactsAndAuthority": ["release", "production"] },
+    "evidence": { "positiveEvidence": ["focused contract tests"], "negativeAndSecondOrderTests": ["authority boundary"], "deliveryPacketFields": ["candidate identity"] },
+    "verificationCadence": { "microBatchId": "team-contract", "closureHypothesis": "Portable contracts retain project truth.", "includedChanges": ["TeamTaskPacketV2"], "implementationSmoke": ["focused test"], "frozenCandidateFocusedGate": ["runtime validation"], "candidateCloseoutChecks": ["schema parity"], "independentAdversarialDelta": ["authority boundary"], "deferredTransitionGates": ["L2 package consumer"], "trustedReceipts": [], "receiptInvalidationTriggers": ["project truth drift"] },
+    "handoff": { "required": true, "nextOwner": "control-tower" },
+    "escalationBudget": { "implementationAttempts": 2, "narrowRework": 1, "harnessFailure": 1, "controllerIntervention": 1, "semanticEscape": 0 },
+    "stop": { "exactStopPoint": "Source candidate ready for independent acceptance.", "nextGateProhibited": "release" },
+    "authorityBoundary": { "agentDispatch": false, "git": false, "release": false, "deployment": false, "production": false, "business": false, "automation": false, "money": false },
+    "authorizationGranted": false
+  }]
+}

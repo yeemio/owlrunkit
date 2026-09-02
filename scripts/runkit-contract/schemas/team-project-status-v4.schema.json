@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-project-status-v4.schema.json",
+  "title": "OwlCoda RunKit Team Project Status V4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "status", "projectId", "objective", "overall", "counts",
+    "milestones", "workstreams", "workItems", "agents", "readyQueue",
+    "criticalWorkItems", "openDecisions", "resolvedDecisions",
+    "deferredVerifications", "openDeferredVerificationIds", "integrationGates",
+    "dataCandidates", "sourceDeliveries", "warnings", "externalGates",
+    "deliveryLifecycle", "projectTruthHash", "authorizationGranted",
+    "deliveryDisposition", "headline", "dominantGap", "nextAction",
+    "nextActorId", "exitCode"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamProjectStatusV4" },
+    "status": { "const": "team_project_status" },
+    "projectId": { "$ref": "#/$defs/text" },
+    "objective": { "$ref": "#/$defs/text" },
+    "overall": { "enum": ["planned", "active", "active_with_blockers", "completed"] },
+    "counts": { "type": "object" },
+    "milestones": { "type": "array", "items": { "type": "object" } },
+    "workstreams": { "type": "array", "items": { "type": "object" } },
+    "workItems": { "type": "array", "items": { "type": "object" } },
+    "agents": { "type": "array", "items": { "type": "object" } },
+    "readyQueue": { "$ref": "#/$defs/strings" },
+    "criticalWorkItems": { "$ref": "#/$defs/strings" },
+    "openDecisions": { "type": "array", "items": { "type": "object" } },
+    "resolvedDecisions": { "type": "array", "items": { "type": "object" } },
+    "deferredVerifications": { "type": "array", "items": { "type": "object" } },
+    "openDeferredVerificationIds": { "$ref": "#/$defs/strings" },
+    "integrationGates": { "type": "array", "items": { "type": "object" } },
+    "dataCandidates": { "type": "array", "items": { "type": "object" } },
+    "sourceDeliveries": { "type": "array", "items": { "type": "object" } },
+    "warnings": { "type": "array", "items": { "type": "object" } },
+    "externalGates": { "type": "array", "items": { "$ref": "#/$defs/externalGate" } },
+    "deliveryLifecycle": { "$ref": "#/$defs/deliveryLifecycle" },
+    "projectTruthHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "authorizationGranted": { "const": false },
+    "deliveryDisposition": {
+      "enum": [
+        "work_ledger_incomplete", "work_ledger_complete", "source_accepted",
+        "integrated", "materialized", "deployed", "live_readback_passed", "product_accepted"
+      ]
+    },
+    "headline": { "$ref": "#/$defs/text" },
+    "dominantGap": { "$ref": "#/$defs/dominantGap" },
+    "nextAction": { "$ref": "#/$defs/nullableText" },
+    "nextActorId": { "$ref": "#/$defs/nullableText" },
+    "exitCode": { "const": 0 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "deliveryDisposition": { "const": "product_accepted" } }, "required": ["deliveryDisposition"] },
+      "then": {
+        "properties": {
+          "dominantGap": { "properties": { "kind": { "const": "none" } } },
+          "nextAction": { "type": "null" },
+          "nextActorId": { "type": "null" }
+        }
+      }
+    }
+  ],
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitTeamProjectStatusV4",
+      "status": "team_project_status",
+      "projectId": "delivery-wave",
+      "objective": "Preserve delivery truth after source completion",
+      "overall": "completed",
+      "counts": {},
+      "milestones": [],
+      "workstreams": [],
+      "workItems": [],
+      "agents": [],
+      "readyQueue": [],
+      "criticalWorkItems": [],
+      "openDecisions": [],
+      "resolvedDecisions": [],
+      "deferredVerifications": [],
+      "openDeferredVerificationIds": [],
+      "integrationGates": [],
+      "dataCandidates": [],
+      "sourceDeliveries": [],
+      "warnings": [],
+      "externalGates": [],
+      "deliveryLifecycle": {
+        "schemaVersion": "OwlCodaRunKitDeliveryLifecycleV1",
+        "lifecycleStatus": "in_progress",
+        "currentStage": "work_ledger_complete",
+        "nextRequiredStage": "source",
+        "blockingStage": null,
+        "blockingExternalGateIds": [],
+        "stages": [
+          { "stage": "source", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+          { "stage": "integration", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+          { "stage": "materialization", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+          { "stage": "deployment", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+          { "stage": "live_readback", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null },
+          { "stage": "product_acceptance", "status": "pending", "recordId": null, "ownerAgentId": null, "summary": null, "evidenceRefs": [], "externalGateIds": [], "occurredAt": null, "truthRef": null }
+        ],
+        "authorizationGranted": false
+      },
+      "projectTruthHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "authorizationGranted": false,
+      "deliveryDisposition": "work_ledger_complete",
+      "headline": "Dominant gap: delivery stage source; next: Record delivery stage source.",
+      "dominantGap": {
+        "kind": "delivery_stage",
+        "id": "source",
+        "title": "Delivery stage source",
+        "workItemId": null,
+        "agentId": null,
+        "reason": "Delivery stage source has no evidence-bound record.",
+        "truthRefs": ["project/definition.json"]
+      },
+      "nextAction": "Record delivery stage source.",
+      "nextActorId": null,
+      "exitCode": 0
+    }
+  ],
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "nullableText": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "nonemptyStrings": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } },
+    "stageName": { "enum": ["source", "integration", "materialization", "deployment", "live_readback", "product_acceptance"] },
+    "nullableStage": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/stageName" }] },
+    "timestamp": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$" },
+    "nullableTimestamp": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/timestamp" }] },
+    "externalGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "gateId", "title", "requiredFor", "gateStatus", "blocking", "ownerAgentId", "source", "summary", "evidenceRefs", "occurredAt", "truthRefs", "authorizationGranted"],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitExternalGateV1" },
+        "gateId": { "$ref": "#/$defs/text" },
+        "title": { "$ref": "#/$defs/text" },
+        "requiredFor": { "$ref": "#/$defs/stageName" },
+        "gateStatus": { "enum": ["pending", "passed", "blocked", "deferred"] },
+        "blocking": { "type": "boolean" },
+        "ownerAgentId": { "$ref": "#/$defs/text" },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["adapterId", "ref", "sha256"],
+          "properties": {
+            "adapterId": { "$ref": "#/$defs/text" },
+            "ref": { "$ref": "#/$defs/text" },
+            "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+          }
+        },
+        "summary": { "$ref": "#/$defs/text" },
+        "evidenceRefs": { "$ref": "#/$defs/nonemptyStrings" },
+        "occurredAt": { "$ref": "#/$defs/timestamp" },
+        "truthRefs": { "$ref": "#/$defs/nonemptyStrings" },
+        "authorizationGranted": { "const": false }
+      }
+    },
+    "deliveryStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "status", "recordId", "ownerAgentId", "summary", "evidenceRefs", "externalGateIds", "occurredAt", "truthRef"],
+      "properties": {
+        "stage": { "$ref": "#/$defs/stageName" },
+        "status": { "enum": ["pending", "accepted", "rejected", "integrated", "materialized", "deployed", "failed", "rolled_back", "passed", "deferred"] },
+        "recordId": { "$ref": "#/$defs/nullableText" },
+        "ownerAgentId": { "$ref": "#/$defs/nullableText" },
+        "summary": { "$ref": "#/$defs/nullableText" },
+        "evidenceRefs": { "$ref": "#/$defs/strings" },
+        "externalGateIds": { "$ref": "#/$defs/strings" },
+        "occurredAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "truthRef": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "deliveryLifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "lifecycleStatus", "currentStage", "nextRequiredStage", "blockingStage", "blockingExternalGateIds", "stages", "authorizationGranted"],
+      "properties": {
+        "schemaVersion": { "const": "OwlCodaRunKitDeliveryLifecycleV1" },
+        "lifecycleStatus": { "enum": ["in_progress", "blocked", "completed"] },
+        "currentStage": { "enum": ["work_ledger_incomplete", "work_ledger_complete", "source_accepted", "integrated", "materialized", "deployed", "live_readback_passed", "product_accepted"] },
+        "nextRequiredStage": { "$ref": "#/$defs/nullableStage" },
+        "blockingStage": { "$ref": "#/$defs/nullableStage" },
+        "blockingExternalGateIds": { "$ref": "#/$defs/strings" },
+        "stages": { "type": "array", "minItems": 6, "maxItems": 6, "items": { "$ref": "#/$defs/deliveryStage" } },
+        "authorizationGranted": { "const": false }
+      }
+    },
+    "dominantGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "title", "workItemId", "agentId", "reason", "truthRefs"],
+      "properties": {
+        "kind": { "enum": ["decision", "failed_work", "work_item", "deferred_verification", "integration_gate", "release_authority", "external_gate", "delivery_stage", "none"] },
+        "id": { "$ref": "#/$defs/nullableText" },
+        "title": { "$ref": "#/$defs/nullableText" },
+        "workItemId": { "$ref": "#/$defs/nullableText" },
+        "agentId": { "$ref": "#/$defs/nullableText" },
+        "reason": { "$ref": "#/$defs/nullableText" },
+        "truthRefs": { "$ref": "#/$defs/strings" }
+      }
+    }
+  }
+}

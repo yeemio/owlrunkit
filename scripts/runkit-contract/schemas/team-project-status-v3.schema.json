@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-project-status-v3.schema.json",
+  "title": "OwlCoda RunKit Team Project Status V3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "projectId",
+    "objective",
+    "overall",
+    "counts",
+    "milestones",
+    "workstreams",
+    "workItems",
+    "agents",
+    "readyQueue",
+    "criticalWorkItems",
+    "openDecisions",
+    "resolvedDecisions",
+    "deferredVerifications",
+    "openDeferredVerificationIds",
+    "integrationGates",
+    "dataCandidates",
+    "sourceDeliveries",
+    "warnings",
+    "projectTruthHash",
+    "authorizationGranted",
+    "deliveryDisposition",
+    "headline",
+    "dominantGap",
+    "nextAction",
+    "nextActorId",
+    "exitCode"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamProjectStatusV3" },
+    "status": { "const": "team_project_status" },
+    "projectId": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "overall": { "enum": ["planned", "active", "active_with_blockers", "completed"] },
+    "counts": { "type": "object" },
+    "milestones": { "type": "array", "items": { "type": "object" } },
+    "workstreams": { "type": "array", "items": { "type": "object" } },
+    "workItems": { "type": "array", "items": { "type": "object" } },
+    "agents": { "type": "array", "items": { "type": "object" } },
+    "readyQueue": { "type": "array", "items": { "type": "string" } },
+    "criticalWorkItems": { "type": "array", "items": { "type": "string" } },
+    "openDecisions": { "type": "array", "items": { "type": "object" } },
+    "resolvedDecisions": { "type": "array", "items": { "type": "object" } },
+    "deferredVerifications": { "type": "array", "items": { "type": "object" } },
+    "openDeferredVerificationIds": { "type": "array", "items": { "type": "string" } },
+    "integrationGates": { "type": "array", "items": { "type": "object" } },
+    "dataCandidates": { "type": "array", "items": { "type": "object" } },
+    "sourceDeliveries": { "type": "array", "items": { "type": "object" } },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "workItemId", "message", "truthRefs"],
+        "properties": {
+          "code": { "const": "no_bound_verification_receipt" },
+          "workItemId": { "type": "string", "minLength": 1 },
+          "message": { "type": "string", "minLength": 1 },
+          "truthRefs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "projectTruthHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "authorizationGranted": { "const": false },
+    "deliveryDisposition": {
+      "enum": ["work_in_progress", "code_complete_without_release_authority"]
+    },
+    "headline": { "type": "string", "minLength": 1 },
+    "dominantGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "title", "workItemId", "agentId", "reason", "truthRefs"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "decision",
+            "failed_work",
+            "work_item",
+            "deferred_verification",
+            "integration_gate",
+            "release_authority",
+            "none"
+          ]
+        },
+        "id": { "type": ["string", "null"] },
+        "title": { "type": ["string", "null"] },
+        "workItemId": { "type": ["string", "null"] },
+        "agentId": { "type": ["string", "null"] },
+        "reason": { "type": ["string", "null"] },
+        "truthRefs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "nextAction": { "type": ["string", "null"] },
+    "nextActorId": { "type": ["string", "null"] },
+    "exitCode": { "const": 0 }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitTeamProjectStatusV3",
+      "status": "team_project_status",
+      "projectId": "g13-canary",
+      "objective": "Repair the bounded G13 canary contract",
+      "overall": "planned",
+      "counts": {},
+      "milestones": [],
+      "workstreams": [],
+      "workItems": [],
+      "agents": [],
+      "readyQueue": [],
+      "criticalWorkItems": [],
+      "openDecisions": [],
+      "resolvedDecisions": [],
+      "deferredVerifications": [],
+      "openDeferredVerificationIds": [],
+      "integrationGates": [],
+      "dataCandidates": [],
+      "sourceDeliveries": [],
+      "warnings": [],
+      "projectTruthHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "authorizationGranted": false,
+      "deliveryDisposition": "work_in_progress",
+      "headline": "Project is planned; assign the first ready WorkItem.",
+      "dominantGap": {
+        "kind": "none",
+        "id": null,
+        "title": null,
+        "workItemId": null,
+        "agentId": null,
+        "reason": null,
+        "truthRefs": []
+      },
+      "nextAction": null,
+      "nextActorId": null,
+      "exitCode": 0
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "overall": { "const": "completed" } },
+        "required": ["overall"]
+      },
+      "then": {
+        "properties": {
+          "deliveryDisposition": { "const": "code_complete_without_release_authority" },
+          "nextAction": { "type": "string", "minLength": 1 },
+          "dominantGap": {
+            "properties": { "kind": { "const": "release_authority" } }
+          }
+        }
+      },
+      "else": {
+        "properties": { "deliveryDisposition": { "const": "work_in_progress" } }
+      }
+    }
+  ]
+}

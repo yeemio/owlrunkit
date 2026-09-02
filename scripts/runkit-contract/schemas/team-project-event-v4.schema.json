@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://owlcoda.com/schemas/runkit/team-project-event-v4.schema.json",
+  "title": "OwlCoda RunKit Team Project Event V4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "type", "occurredAt"],
+  "properties": {
+    "schemaVersion": { "const": "OwlCodaRunKitTeamProjectEventV4" },
+    "eventId": { "$ref": "#/$defs/id" },
+    "type": { "enum": ["upstream_reopened", "responsibility_transferred"] },
+    "occurredAt": { "type": "string", "minLength": 24 },
+    "reopenId": { "$ref": "#/$defs/id" },
+    "transferId": { "$ref": "#/$defs/id" },
+    "assignmentId": { "$ref": "#/$defs/id" },
+    "previousAssignmentId": { "$ref": "#/$defs/id" },
+    "previousCheckpointEventId": { "$ref": "#/$defs/id" },
+    "checkpointEventId": { "$ref": "#/$defs/id" },
+    "handoffEventId": { "$ref": "#/$defs/id" },
+    "assignmentEventId": { "$ref": "#/$defs/id" },
+    "workItemId": { "$ref": "#/$defs/id" },
+    "triggerWorkItemId": { "$ref": "#/$defs/id" },
+    "fromAgentId": { "$ref": "#/$defs/id" },
+    "reviewerAgentId": { "$ref": "#/$defs/id" },
+    "toAgentId": { "$ref": "#/$defs/id" },
+    "reason": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "state": {
+      "enum": ["active", "waiting_dependency", "waiting_decision", "verifying", "ready_to_integrate"]
+    },
+    "completedUnits": { "type": "integer", "minimum": 0 },
+    "evidenceRefs": { "$ref": "#/$defs/nonEmptyStrings" },
+    "blockerRefs": { "$ref": "#/$defs/strings" },
+    "decisionRefs": { "$ref": "#/$defs/strings" },
+    "nextAction": { "type": "string", "minLength": 1 },
+    "sourceFingerprint": { "type": "string", "pattern": "^(sha256:)?[a-f0-9]{64}$" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "type": { "const": "upstream_reopened" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": [
+          "reopenId",
+          "assignmentId",
+          "previousAssignmentId",
+          "previousCheckpointEventId",
+          "workItemId",
+          "triggerWorkItemId",
+          "fromAgentId",
+          "reviewerAgentId",
+          "toAgentId",
+          "reason",
+          "evidenceRefs",
+          "nextAction"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "responsibility_transferred" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": [
+          "transferId",
+          "assignmentId",
+          "previousAssignmentId",
+          "checkpointEventId",
+          "handoffEventId",
+          "assignmentEventId",
+          "workItemId",
+          "fromAgentId",
+          "toAgentId",
+          "state",
+          "summary",
+          "evidenceRefs",
+          "blockerRefs",
+          "decisionRefs",
+          "nextAction"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "strings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "nonEmptyStrings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "OwlCodaRunKitTeamProjectEventV4",
+      "eventId": "upstream-reopened-source-defect-001",
+      "type": "upstream_reopened",
+      "occurredAt": "2026-08-12T10:07:00.000Z",
+      "reopenId": "source-defect-001",
+      "assignmentId": "reopen-source-defect-001",
+      "previousAssignmentId": "assign-source",
+      "previousCheckpointEventId": "checkpoint-source-done",
+      "workItemId": "source",
+      "triggerWorkItemId": "acceptance",
+      "fromAgentId": "source-writer",
+      "reviewerAgentId": "reviewer",
+      "toAgentId": "source-writer",
+      "reason": "Acceptance found a source defect.",
+      "evidenceRefs": ["receipt:acceptance-failure"],
+      "nextAction": "Repair source and produce a fresh candidate."
+    },
+    {
+      "schemaVersion": "OwlCodaRunKitTeamProjectEventV4",
+      "eventId": "responsibility-transferred-engine-a-to-b",
+      "type": "responsibility_transferred",
+      "occurredAt": "2026-08-12T11:01:00.000Z",
+      "transferId": "engine-a-to-b",
+      "assignmentId": "transfer-engine-a-to-b",
+      "previousAssignmentId": "assign-engine-a",
+      "checkpointEventId": "transfer-checkpoint-engine-a-to-b",
+      "handoffEventId": "transfer-handoff-engine-a-to-b",
+      "assignmentEventId": "transfer-assignment-engine-a-to-b",
+      "workItemId": "engine",
+      "fromAgentId": "agent-a",
+      "toAgentId": "agent-b",
+      "state": "active",
+      "summary": "Parser complete; serializer remains.",
+      "evidenceRefs": ["receipt:parser"],
+      "blockerRefs": [],
+      "decisionRefs": [],
+      "nextAction": "Implement serializer."
+    }
+  ]
+}
