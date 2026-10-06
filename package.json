@@ -1,6 +1,6 @@
 {
   "name": "owlrunkit",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "Project Driver for cross-Agent project continuity and progression; execution, evidence, verification, and recovery are the underlying trust substrate.",
   "license": "GPL-3.0-or-later",
   "author": "yeemio <owlclaw@163.com>",
@@ -20,5 +20,13 @@
   },
   "engines": {
     "node": ">=20.19.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yeemio/owlrunkit.git"
+  },
+  "homepage": "https://owlcoda.com",
+  "bugs": {
+    "url": "https://github.com/yeemio/owlrunkit/issues"
   }
 }

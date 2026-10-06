@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { parseProjectControlState } from "./project-control-parser.mjs";
 
 export const CONTRACT_VERSION = "0.2";
-export const CORE_VERSION = "0.23.0";
+export const CORE_VERSION = "0.24.0";
 export const RUNTIME_ROOT = ".owlcoda/runkit";
 
 const CORE_FILES = [
@@ -30,6 +30,7 @@ const CORE_FILES = [
   "fleet-discovery.mjs",
   "fleet-skill-plan.mjs",
   "finalize.mjs",
+  "file-event-stop-hook.mjs",
   "formal-workflow.mjs",
   "formal-preflight.mjs",
   "formal-supplemental-evidence.mjs",

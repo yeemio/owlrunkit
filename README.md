@@ -91,7 +91,7 @@ recoverable without becoming the product's Business Truth.
 
 ## Current release
 
-`owlrunkit@0.23.0` is the current public release. Its main public surfaces
+`owlrunkit@0.24.0` is the current public release. Its main public surfaces
 include:
 
 - Project Driver and typed delivery lifecycle;
@@ -99,6 +99,7 @@ include:
 - controller/target worktree separation and foreign-candidate verification;
 - Team Delivery read-only recommendations and portable transfer packets;
 - bounded compact-session Hook Recovery;
+- optional native Codex Stop continuation on a bound RunKit file event;
 - completed-project drift detection and read-only successor scaffolding;
 - fail-closed bootstrap, profile, registry, Core, and shared-Skill diagnostics.
 
@@ -109,14 +110,14 @@ public source tag.
 
 ## Install
 
-This package is the lifecycle-stable, registry-gated `owlrunkit@0.23.0`
+This package is the lifecycle-stable, registry-gated `owlrunkit@0.24.0`
 artifact published on the official npm registry. Project adoption verifies the
 exact registry version, shasum, integrity, and tarball URL; local tarballs,
 workspace links, Git URLs, and mutable dist-tags are never formal adoption
 provenance.
 
 ```bash
-npm install --save-exact owlrunkit@0.23.0
+npm install --save-exact owlrunkit@0.24.0
 ```
 
 Use `npx --no-install owlrunkit` for project commands. The package bootstrap
@@ -132,9 +133,9 @@ the project Config must independently bind the same Core.
 ```bash
 npx --no-install owlrunkit --version
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.23.0 --dry-run
+  --exact owlrunkit@0.24.0 --dry-run
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.23.0 --apply
+  --exact owlrunkit@0.24.0 --apply
 npx --no-install owlrunkit init --workspace /absolute/path/to/project
 npx --no-install owlrunkit doctor --workspace /absolute/path/to/project
 npx --no-install owlrunkit inspect --workspace /absolute/path/to/project --json --compact
@@ -887,6 +888,88 @@ For `identity_file` authentication, the manifest contains only the canonical
 local file path and SHA-256 binding; the private key bytes are never persisted
 by RunKit. Agent authentication stores only its opaque `agent:`, `keychain:`,
 or `vault:` reference.
+
+## Optional Codex file-event Stop hook
+
+This feature uses the native synchronous Codex `Stop` hook. Codex remains
+waiting in that hook; an operating-system file notification releases it with
+one continuation request. There are no periodic model calls. It cannot restart
+a fully ended idle Desktop turn. Native continuation was tested with Codex
+0.160.1 using an offline response source; that probe does not install or enable
+the hook in an existing Desktop session.
+
+Install the exact registry release in the controller workspace through your
+normal project adoption procedure. Add the following entry to the active
+project or user `hooks.json`, merging with existing hooks. Use the real
+absolute paths for Node, the installed package, and the canonical workspace:
+
+```json
+{
+  "hooks": {
+    "Stop": [{
+      "hooks": [{
+        "type": "command",
+        "command": "'/absolute/path/to/node' '/canonical/workspace/node_modules/owlrunkit/scripts/runkit-contract/file-event-stop-hook.mjs' --workspace '/canonical/workspace'",
+        "timeout": 330,
+        "statusMessage": "Waiting for the bound RunKit file event"
+      }]
+    }]
+  }
+}
+```
+
+On Windows, use the command quoting required by your native hook shell. Native
+hooks must be enabled in Codex and the exact hook configuration approved through
+`/hooks`. Review and approve the configuration again when its bytes change;
+do not bypass trust in normal use. See the [native Codex hook documentation](https://learn.chatgpt.com/docs/hooks).
+
+Before the controller reaches Stop, explicitly arm one existing assignment by
+writing `.owlcoda/runkit/file-event-hook.json` in that workspace:
+
+```json
+{
+  "schemaVersion": "OwlRunKitFileEventHookBindingV1",
+  "enabled": true,
+  "workspaceRoot": "/canonical/workspace",
+  "projectId": "your-project",
+  "projectDefinitionSha256": "sha256:<exact-definition-digest>",
+  "workItemId": "your-work-item",
+  "assignmentId": "your-assignment",
+  "candidateFingerprint": "sha256:<exact-frozen-source-fingerprint>",
+  "sessionId": "actual-codex-session-id",
+  "eventId": "checkpoint-your-delivery-id",
+  "timeoutMs": 300000
+}
+```
+
+Use `teamProjectDefinitionBindingV1` from the installed `team-project.mjs` to
+derive the existing project definition binding. Bind the actual parent session
+ID and the frozen candidate fingerprint agreed in the assignment. The producer
+records the named checkpoint through the existing `project checkpoint` command;
+the event ID is `checkpoint-` followed by its checkpoint ID. Supported checkpoint
+states are `verifying`, `failed`, and `waiting_decision`, subject to existing
+Project Driver rules. For example, `verifying` still requires an independent
+current owner, and `waiting_decision` requires an applicable open decision.
+The hook does not relax these rules or create assignments.
+
+Only the exact bound checkpoint at the current assignment and scope requests
+continuation. Other file changes may cause a local reread but cannot call a
+model. The resumed controller reads the saved evidence and decides within its
+existing authority. Checkpoint prose is untrusted data. The hook itself performs
+no acceptance, Git operation, release, deployment, or executor launch.
+
+Each session/project/event is claimed at most once under
+`.owlcoda/runkit/hook-continuations/`. A claim means `continuation_requested`,
+not delivered or accepted. If Codex is interrupted after the claim, inspect it
+and resume manually; the hook will not retry and risk duplicating work.
+
+Setting `enabled` to `false` or removing the binding cancels a pending wait.
+Assignment, scope, or candidate mismatch stops without continuation. The
+explicit wait is bounded to at most 600000 milliseconds; keep the native hook
+timeout above that binding's timeout. Expiry ends the wait and reports that no
+continuation was requested. To wait for a new event, arm its new identity in an
+active session. Installing the package alone enables nothing and changes no
+global configuration, shared Skill, or other workspace.
 
 ## Shared Skill upgrades
 

@@ -81,13 +81,14 @@ RunKit **不负责**：
 
 ## 当前版本
 
-当前公开版本是 `owlrunkit@0.23.0`，主要公开能力包括：
+当前公开版本是 `owlrunkit@0.24.0`，主要公开能力包括：
 
 - Project Driver 和类型化交付生命周期；
 - Quick / Formal 验证及源码绑定回执；
 - 控制 worktree 与冻结目标 worktree 分离；
 - Team Delivery 只读建议与可移植交接包；
 - 严格有界的会话压缩恢复投影；
+- 可选的 RunKit 文件事件触发 Codex 原生 Stop hook 继续机制；
 - 完成项目的后续漂移识别和只读 successor 草案；
 - bootstrap、profile、registry、Core 和共享 Skill 的 fail-closed 诊断。
 
@@ -95,12 +96,30 @@ RunKit **不负责**：
 仍在私有源码仓库进行；每个受 GPL 覆盖的 npm 版本都必须对应一个精确公开源码
 Tag。
 
+## 可选的文件事件触发
+
+0.24.0 默认关闭这项功能。显式配置并绑定现有任务后，Codex 在同步 Stop
+hook 中等待；匹配的 RunKit checkpoint 文件写入会触发原会话继续处理交付。
+等待使用操作系统文件通知，不定时调用模型。
+
+绑定包含 workspace、项目定义、WorkItem、assignment、冻结候选、事件和原会话。
+关闭绑定、任务被替代、候选不匹配或重复事件均不会触发继续。继续请求只是通知，
+不代表交付已验收，也不授予新的权限。
+
+原会话必须仍在 Stop hook 中等待。这项功能不能重新启动已完全结束的空闲桌面
+回合；等待超过显式时限会退出。真实探针使用 Codex 0.160.1 与离线响应源验证了
+原生继续路径，没有调用付费模型。安装包本身不会启用 hook、改全局配置或升级
+其他项目。
+
+完整配置、原生 `/hooks` 信任确认、关闭和恢复步骤见
+[英文设置说明](README.md#optional-codex-file-event-stop-hook)。
+
 ## 安装
 
 请在项目中精确锁定版本，并始终使用项目本地 CLI：
 
 ```bash
-npm install --save-exact owlrunkit@0.23.0
+npm install --save-exact owlrunkit@0.24.0
 npx --no-install owlrunkit --version
 ```
 
@@ -108,9 +127,9 @@ npx --no-install owlrunkit --version
 
 ```bash
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.23.0 --dry-run
+  --exact owlrunkit@0.24.0 --dry-run
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.23.0 --apply
+  --exact owlrunkit@0.24.0 --apply
 npx --no-install owlrunkit doctor --workspace "$PWD"
 npx --no-install owlrunkit mode recommend --workspace "$PWD"
 ```

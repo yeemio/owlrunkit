@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.24.0
+
+- Adds an opt-in native Codex Stop hook that waits for RunKit file changes and
+  requests one continuation in the bound session when its saved checkpoint
+  arrives. Uses operating-system file notifications, without model polling or
+  a recurring automation. Disabled unless explicitly configured and armed.
+- Binds workspace, project definition, WorkItem, assignment, candidate, event,
+  and session. Superseded work, disabled bindings, mismatched candidates, and
+  repeated events cannot request another continuation. A local claim records
+  a continuation request, never acceptance or new authority.
+- Requires an active session waiting in its synchronous Stop hook. Background
+  hooks cannot start a fully ended idle Desktop turn. Waiting is bounded by an
+  explicit timeout; expiry ends the wait without continuing.
+- Adds public repository, homepage, and issue metadata to the npm package.
+
 ## 0.23.0
 
 - Adds Project Status V5 with a separate completion-continuity projection.
