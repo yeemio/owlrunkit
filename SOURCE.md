@@ -19,4 +19,4 @@ tarball URL, and matching public source tag. Local directories, `file:`
 dependencies, local tarballs, Git URLs, workspace links, and mutable dist-tags
 are not formal cross-project adoption evidence.
 
-For `owlrunkit@0.23.0`, use tag `v0.23.0` in this repository.
+For `owlrunkit@0.24.1`, use tag `v0.24.1` in this repository.

@@ -91,7 +91,7 @@ recoverable without becoming the product's Business Truth.
 
 ## Current release
 
-`owlrunkit@0.24.0` is the current public release. Its main public surfaces
+`owlrunkit@0.24.1` is the current public release. Its main public surfaces
 include:
 
 - Project Driver and typed delivery lifecycle;
@@ -110,14 +110,14 @@ public source tag.
 
 ## Install
 
-This package is the lifecycle-stable, registry-gated `owlrunkit@0.24.0`
+This package is the lifecycle-stable, registry-gated `owlrunkit@0.24.1`
 artifact published on the official npm registry. Project adoption verifies the
 exact registry version, shasum, integrity, and tarball URL; local tarballs,
 workspace links, Git URLs, and mutable dist-tags are never formal adoption
 provenance.
 
 ```bash
-npm install --save-exact owlrunkit@0.24.0
+npm install --save-exact owlrunkit@0.24.1
 ```
 
 Use `npx --no-install owlrunkit` for project commands. The package bootstrap
@@ -133,9 +133,9 @@ the project Config must independently bind the same Core.
 ```bash
 npx --no-install owlrunkit --version
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.24.0 --dry-run
+  --exact owlrunkit@0.24.1 --dry-run
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.24.0 --apply
+  --exact owlrunkit@0.24.1 --apply
 npx --no-install owlrunkit init --workspace /absolute/path/to/project
 npx --no-install owlrunkit doctor --workspace /absolute/path/to/project
 npx --no-install owlrunkit inspect --workspace /absolute/path/to/project --json --compact
@@ -895,7 +895,7 @@ This feature uses the native synchronous Codex `Stop` hook. Codex remains
 waiting in that hook; an operating-system file notification releases it with
 one continuation request. There are no periodic model calls. It cannot restart
 a fully ended idle Desktop turn. Native continuation was tested with Codex
-0.160.1 using an offline response source; that probe does not install or enable
+0.162.0-alpha.2 using an offline response source; that probe does not install or enable
 the hook in an existing Desktop session.
 
 Install the exact registry release in the controller workspace through your
@@ -923,53 +923,50 @@ hooks must be enabled in Codex and the exact hook configuration approved through
 `/hooks`. Review and approve the configuration again when its bytes change;
 do not bypass trust in normal use. See the [native Codex hook documentation](https://learn.chatgpt.com/docs/hooks).
 
-Before the controller reaches Stop, explicitly arm one existing assignment by
+Before the controller reaches Stop, explicitly arm the existing project by
 writing `.owlcoda/runkit/file-event-hook.json` in that workspace:
 
 ```json
 {
-  "schemaVersion": "OwlRunKitFileEventHookBindingV1",
+  "schemaVersion": "OwlRunKitFileEventHookBindingV2",
   "enabled": true,
   "workspaceRoot": "/canonical/workspace",
   "projectId": "your-project",
-  "projectDefinitionSha256": "sha256:<exact-definition-digest>",
-  "workItemId": "your-work-item",
-  "assignmentId": "your-assignment",
-  "candidateFingerprint": "sha256:<exact-frozen-source-fingerprint>",
   "sessionId": "actual-codex-session-id",
-  "eventId": "checkpoint-your-delivery-id",
   "timeoutMs": 300000
 }
 ```
 
-Use `teamProjectDefinitionBindingV1` from the installed `team-project.mjs` to
-derive the existing project definition binding. Bind the actual parent session
-ID and the frozen candidate fingerprint agreed in the assignment. The producer
-records the named checkpoint through the existing `project checkpoint` command;
-the event ID is `checkpoint-` followed by its checkpoint ID. Supported checkpoint
-states are `verifying`, `failed`, and `waiting_decision`, subject to existing
-Project Driver rules. For example, `verifying` still requires an independent
-current owner, and `waiting_decision` requires an applicable open decision.
-The hook does not relax these rules or create assignments.
+Use the project ID in `project/definition.json` and the actual Codex session ID.
+Replace a 0.24.0 V1 binding with this V2 binding. There is no checkpoint state,
+event ID, assignment or frozen candidate prerequisite. Producers keep writing
+normal RunKit data through their existing commands; no ZCode delivery-format
+change is required. The hook recursively watches `.owlcoda/runkit/` using local
+OS file notifications. Changed content requests continuation, including normal
+`waiting_dependency` writes or data files without a Project Driver event.
 
-Only the exact bound checkpoint at the current assignment and scope requests
-continuation. Other file changes may cause a local reread but cannot call a
-model. The resumed controller reads the saved evidence and decides within its
-existing authority. Checkpoint prose is untrusted data. The hook itself performs
-no acceptance, Git operation, release, deployment, or executor launch.
-
-Each session/project/event is claimed at most once under
-`.owlcoda/runkit/hook-continuations/`. A claim means `continuation_requested`,
-not delivered or accepted. If Codex is interrupted after the claim, inspect it
-and resume manually; the hook will not retry and risk duplicating work.
+Binding edits, `hook-continuations/`, control locks and temporary transaction
+files are excluded from the content snapshot. A per-project/session cursor
+merges unchanged rewrites and prevents concurrent requests for the same change.
+The first wait establishes the current baseline; subsequent waits can notice
+changes since that cursor. The Stop following a hook continuation does not wait
+again, preventing an automatic feedback loop. A cursor's
+`continuation_requested` status is not delivery or acceptance. If interrupted
+after the claim, inspect the project and resume manually rather than replaying it.
 
 Setting `enabled` to `false` or removing the binding cancels a pending wait.
-Assignment, scope, or candidate mismatch stops without continuation. The
-explicit wait is bounded to at most 600000 milliseconds; keep the native hook
-timeout above that binding's timeout. Expiry ends the wait and reports that no
-continuation was requested. To wait for a new event, arm its new identity in an
-active session. Installing the package alone enables nothing and changes no
-global configuration, shared Skill, or other workspace.
+A project/session mismatch never continues. Waits are bounded to 600000 ms;
+keep the native hook timeout above the binding timeout. Expiry ends the wait
+without starting another model pass. OS notifications may coalesce; this is a
+notification to inspect current data, not an audit trail for every intermediate
+write. The hook grants no new permissions and does no acceptance, Git operation,
+release, deployment or executor launch. The resumed Codex controller handles its
+existing authorized work, including driving ZCode through Computer Use when
+that is its existing execution arrangement.
+
+Installing the package enables nothing and changes no global configuration,
+shared Skill or other workspace. This is same-session synchronous Stop
+continuation; fully idle Desktop wake requires a separate supported ingress.
 
 ## Shared Skill upgrades
 

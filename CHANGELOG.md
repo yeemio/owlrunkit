@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.24.1
+
+- Corrects the optional Stop hook to notify on RunKit data file changes, including
+  `waiting_dependency`, without checkpoint state, event, assignment or candidate
+  prerequisites. V2 binds only canonical workspace, project, session and timeout.
+- Recursively watches local data, coalesces unchanged writes, deduplicates through
+  a content cursor and excludes the hook's own claims and transaction scratch.
+  A continuation's Stop does not re-arm itself. Default-off and authority limits
+  remain; this does not restart an ended idle Desktop turn.
+- Keeps 0.24.0 as the exact published rollback baseline.
+
 ## 0.24.0
 
 - Adds an opt-in native Codex Stop hook that waits for RunKit file changes and

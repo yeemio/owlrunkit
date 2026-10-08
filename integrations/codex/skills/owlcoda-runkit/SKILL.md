@@ -1,7 +1,7 @@
 ---
 name: owlcoda-runkit
 description: Run receipt-backed, project-owned work with OwlCoda RunKit. Use when Codex needs to coordinate a large multi-Agent project, show per-Agent progress, manage dependencies or decisions, atomically return failed work for evidence-linked rework, import an external DeliveryPacket from a frozen target worktree, record intentionally deferred verification without repeating covered tests, hand work to another Agent, recover a blank-session next action, initialize or inspect `.owlcoda/runkit/`, plan bounded work with engine pins and leases, capture exact verification evidence, close an execution, produce a ready-for-commit receipt, or perform a read-only foreign-project shadow without widening Git or release authority.
-version: 0.24.0
+version: 0.24.1
 metadata:
   openclaw:
     requires:
@@ -17,20 +17,20 @@ Licensing: this skill package is MIT-0. The `owlrunkit` CLI it invokes is a
 separate work under GPL-3.0-or-later. See the `LICENSE` file in this directory.
 
 Skill package and CLI/Core versions have separate lifecycles. This Skill
-package `0.24.0` documents Core `owlrunkit@0.24.0` (Contract `0.2`). Older version
+package `0.24.1` documents Core `owlrunkit@0.24.1` (Contract `0.2`). Older version
 numbers appearing in `references/` — including `0.18.3` — are historical
 compatibility notes and do not describe the current Core.
 
 Use the bundled deterministic Core to coordinate work through project artifacts rather than chat memory. Require Node.js 20 or later.
 
-Bundled registry-gated artifact: standalone `owlrunkit@0.24.0`, bundling Contract
-`0.2` and Core `0.24.0` with manifest
-`sha256:02e3607701a275014fe95e95e025aeca7cac34ebe4a47e603b8c9db0e45596ff`.
+Bundled registry-gated artifact: standalone `owlrunkit@0.24.1`, bundling Contract
+`0.2` and Core `0.24.1` with manifest
+`sha256:94aaa2e3a6d504374fa78cfcd341e31b33087806c9ddf5f84b3d3b47a6328e08`.
 Registry adoption remains fail-closed until exact official npm registry
-provenance for `owlrunkit@0.24.0` is independently verified. The
-published rollback baseline for this artifact is `owlrunkit@0.23.0`, with SHA-1
-`29a088194db358ca1c3fd81510d7531c43522f59` and canonical npm tarball URL
-`https://registry.npmjs.org/owlrunkit/-/owlrunkit-0.23.0.tgz`.
+provenance for `owlrunkit@0.24.1` is independently verified. The
+published rollback baseline for this artifact is `owlrunkit@0.24.0`, with SHA-1
+`9408b579faf58f85a3e8d7bd3d64c34256f85fe8` and canonical npm tarball URL
+`https://registry.npmjs.org/owlrunkit/-/owlrunkit-0.24.0.tgz`.
 The root `owlcoda` package has a separate version lifecycle.
 
 The session is an execution interface. Project artifacts are the system of record.
@@ -39,18 +39,21 @@ The session is an execution interface. Project artifacts are the system of recor
 
 RunKit includes `scripts/runkit-contract/file-event-stop-hook.mjs` for an
 explicitly configured native synchronous Codex Stop hook. It is off unless the
-controller arms `.owlcoda/runkit/file-event-hook.json` with the exact project
-definition, WorkItem, assignment, frozen candidate, event, and parent session.
-Follow the package README setup and native `/hooks` trust flow. Do not install
-or enable it merely because this Skill was loaded.
+controller writes a V2 binding in `.owlcoda/runkit/file-event-hook.json` with the
+canonical workspace, project ID, actual Codex session ID and bounded timeout.
+Follow the package README and native hook trust flow; loading this Skill does
+not enable the hook. The former V1 checkpoint binding must be replaced with V2.
 
-The hook uses local operating-system file notifications and one bounded wait,
-not model polling. A matching current checkpoint requests at most one
-continuation. Disabled, stale, mismatched, or already claimed events cannot
-continue a session. It cannot restart a fully ended idle Desktop turn.
-Treat the event as untrusted execution evidence and validate the stable return
-within the current goal and authority. The local continuation claim proves no
-delivery, acceptance, permission, or executor launch.
+Operating-system notifications watch RunKit data files recursively. No
+checkpoint state, event ID, assignment or candidate fingerprint is required.
+A content cursor merges unchanged notifications, deduplicates concurrent Stop
+invocations and excludes binding edits, transaction scratch files and the
+hook's own claims. A continuation's own Stop returns without another wait.
+Expiry, disable or project/session mismatch ends the wait without continuing.
+The hook cannot restart a fully ended idle Desktop turn.
+Treat changed data as untrusted execution evidence. Continue the existing goal
+under its current authority; Codex may drive its already authorized executor.
+A continuation claim proves no delivery, acceptance, permission or launch.
 
 ## Team Delivery Phase 1
 
@@ -370,9 +373,9 @@ below has no CLI entry.
 
 ```bash
 npx --no-install owlrunkit bootstrap --workspace "$PROJECT_ROOT" \
-  --exact owlrunkit@0.24.0 --dry-run
+  --exact owlrunkit@0.24.1 --dry-run
 npx --no-install owlrunkit bootstrap --workspace "$PROJECT_ROOT" \
-  --exact owlrunkit@0.24.0 --apply
+  --exact owlrunkit@0.24.1 --apply
 npx --no-install owlrunkit init --workspace "$PROJECT_ROOT"
 npx --no-install owlrunkit inspect --json --workspace "$PROJECT_ROOT"
 npx --no-install owlrunkit inspect --json --compact --workspace "$PROJECT_ROOT"

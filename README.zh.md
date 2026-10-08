@@ -81,7 +81,7 @@ RunKit **不负责**：
 
 ## 当前版本
 
-当前公开版本是 `owlrunkit@0.24.0`，主要公开能力包括：
+当前公开版本是 `owlrunkit@0.24.1`，主要公开能力包括：
 
 - Project Driver 和类型化交付生命周期；
 - Quick / Formal 验证及源码绑定回执；
@@ -98,20 +98,20 @@ Tag。
 
 ## 可选的文件事件触发
 
-0.24.0 默认关闭这项功能。显式配置并绑定现有任务后，Codex 在同步 Stop
-hook 中等待；匹配的 RunKit checkpoint 文件写入会触发原会话继续处理交付。
-等待使用操作系统文件通知，不定时调用模型。
+0.24.1 默认关闭此功能。V2 配置只绑定规范工作区、项目 ID、实际 Codex 会话 ID
+和等待时限。Codex 在同步 Stop hook 中等待；RunKit 数据文件内容变化会通知
+原会话继续检查项目，包括 `waiting_dependency`，无需指定 checkpoint 状态、
+event ID、assignment 或冻结候选，也无需更改 ZCode 交付格式。
 
-绑定包含 workspace、项目定义、WorkItem、assignment、冻结候选、事件和原会话。
-关闭绑定、任务被替代、候选不匹配或重复事件均不会触发继续。继续请求只是通知，
-不代表交付已验收，也不授予新的权限。
+等待使用操作系统文件通知，无定时模型调用。内容游标合并未变的重复通知并防止
+并发重复继续；绑定编辑、临时文件、控制锁和 Hook 自己的记录不会触发通知。
+继续后的 Stop 不自动重进等待。继续请求只是通知，不代表验收或新增权限；
+Codex 继续按原授权工作，需要时通过 Computer Use 驱动既有 ZCode 执行器。
 
-原会话必须仍在 Stop hook 中等待。这项功能不能重新启动已完全结束的空闲桌面
-回合；等待超过显式时限会退出。真实探针使用 Codex 0.160.1 与离线响应源验证了
-原生继续路径，没有调用付费模型。安装包本身不会启用 hook、改全局配置或升级
-其他项目。
-
-完整配置、原生 `/hooks` 信任确认、关闭和恢复步骤见
+原会话必须仍在 Stop hook 中等待，不能重新启动已完全结束的空闲 Desktop 回合。
+Codex 0.162.0-alpha.2 原生探针已使用离线响应源验证，没有调用真实付费模型。
+安装包不启用 Hook、不更改全局配置或其他项目。旧 V1 绑定需显式换成 V2；
+完整配置、信任确认、关闭和恢复步骤见
 [英文设置说明](README.md#optional-codex-file-event-stop-hook)。
 
 ## 安装
@@ -119,7 +119,7 @@ hook 中等待；匹配的 RunKit checkpoint 文件写入会触发原会话继�
 请在项目中精确锁定版本，并始终使用项目本地 CLI：
 
 ```bash
-npm install --save-exact owlrunkit@0.24.0
+npm install --save-exact owlrunkit@0.24.1
 npx --no-install owlrunkit --version
 ```
 
@@ -127,9 +127,9 @@ npx --no-install owlrunkit --version
 
 ```bash
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.24.0 --dry-run
+  --exact owlrunkit@0.24.1 --dry-run
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.24.0 --apply
+  --exact owlrunkit@0.24.1 --apply
 npx --no-install owlrunkit doctor --workspace "$PWD"
 npx --no-install owlrunkit mode recommend --workspace "$PWD"
 ```
