@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage Thread Lifecycle"
+  short_description: "Continue, checkpoint, pause, or transfer by real boundaries"
+  default_prompt: "Use $manage-thread-lifecycle to decide whether this Codex task should continue, checkpoint, pause, or transfer based on its actual goal and authority boundaries."

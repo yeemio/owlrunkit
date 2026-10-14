@@ -1,0 +1,11 @@
+# Example only. Choose an explicit Python interpreter and replace /path/to/owlrunkit.
+# Merge this fragment only after reviewing existing hooks. It grants no trust itself.
+[[hooks.SessionStart]]
+matcher = "^compact$"
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "python3 /path/to/owlrunkit/integrations/owlmanage/skills/manage-thread-lifecycle/scripts/compact_checkpoint.py"
+additionalContextLimit = 800
+statusMessage = "Checking task continuity after compaction"
+timeout = 10

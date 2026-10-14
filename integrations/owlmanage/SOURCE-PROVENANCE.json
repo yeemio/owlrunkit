@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "source": "maintainer-owned OwlManage Codex governance",
+  "sourceGovernanceVersion": "2026.09.30.1",
+  "license": "GPL-3.0-or-later; see repository LICENSE",
+  "scope": "lifecycle consumer component and directly related skills only",
+  "files": [
+    {
+      "sourceRelativePath": "governance/codex/skills/manage-thread-lifecycle/SKILL.md",
+      "sourceSHA256": "60e7d86915d0d2eab8f979a1627a88ed1598efff8d4abbbac3f7eeff93d24034",
+      "publishedRelativePath": "integrations/owlmanage/skills/manage-thread-lifecycle/SKILL.md",
+      "publishedSHA256": "60e7d86915d0d2eab8f979a1627a88ed1598efff8d4abbbac3f7eeff93d24034",
+      "adaptation": "unchanged maintainer-owned portable source"
+    },
+    {
+      "sourceRelativePath": "governance/codex/skills/manage-thread-lifecycle/scripts/compact_checkpoint.py",
+      "sourceSHA256": "9cf2f0df0884163ea41de583a31293ec4f281a692d4b41bdf47cdbea0d0147c0",
+      "publishedRelativePath": "integrations/owlmanage/skills/manage-thread-lifecycle/scripts/compact_checkpoint.py",
+      "publishedSHA256": "9cf2f0df0884163ea41de583a31293ec4f281a692d4b41bdf47cdbea0d0147c0",
+      "adaptation": "unchanged maintainer-owned portable source"
+    },
+    {
+      "sourceRelativePath": "governance/codex/skills/manage-thread-lifecycle/agents/openai.yaml",
+      "sourceSHA256": "87743d985b4d2f7c2eba28f48b09ebb78a98de7974dfbd34af13da3fe1e91ac4",
+      "publishedRelativePath": "integrations/owlmanage/skills/manage-thread-lifecycle/agents/openai.yaml",
+      "publishedSHA256": "87743d985b4d2f7c2eba28f48b09ebb78a98de7974dfbd34af13da3fe1e91ac4",
+      "adaptation": "unchanged maintainer-owned portable source"
+    },
+    {
+      "sourceRelativePath": "governance/codex/skills/thread-handoff/SKILL.md",
+      "sourceSHA256": "cb38f02c71a1844d06b90779a5ea107869fbdf44c8777e4a8f3b760ef23c37e8",
+      "publishedRelativePath": "integrations/owlmanage/skills/thread-handoff/SKILL.md",
+      "publishedSHA256": "cb38f02c71a1844d06b90779a5ea107869fbdf44c8777e4a8f3b760ef23c37e8",
+      "adaptation": "unchanged maintainer-owned portable source"
+    },
+    {
+      "sourceRelativePath": "governance/codex/tests/test_compact_checkpoint.py",
+      "sourceSHA256": "66553dc7435dbeed680fa5d918ac533e49c5ad23897678191500c45ee94e3af3",
+      "publishedRelativePath": "integrations/owlmanage/tests/test_compact_checkpoint.py",
+      "publishedSHA256": "0c6bbde7e254506331890e204b54bcbc90805213fb8f36c09c6f92336b0e4b52",
+      "adaptation": "use the current test interpreter instead of a platform-specific Python path"
+    }
+  ],
+  "excluded": [
+    "portfolio business registry and current truth",
+    "controller/model/agent profiles and personal configuration",
+    "runtime ledgers, task/chat/session data and caches",
+    "credentials, machine-specific paths and brand assets",
+    "OwlBridge queue experiments or model recovery prototypes"
+  ]
+}

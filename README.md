@@ -889,6 +889,14 @@ local file path and SHA-256 binding; the private key bytes are never persisted
 by RunKit. Agent authentication stores only its opaque `agent:`, `keychain:`,
 or `vault:` reference.
 
+## Optional OwlManage lifecycle consumer
+
+The [OwlManage lifecycle integration](integrations/owlmanage/README.md) provides
+an opt-in compact-session consumer and its maintainer-owned lifecycle/handoff
+skills. It validates bounded, read-only Hook recovery data without granting
+authority or activating configuration. Native hook activation and runtime recovery
+remain separate acceptance boundaries.
+
 ## Optional Codex file-event Stop hook
 
 This feature uses the native synchronous Codex `Stop` hook. Codex remains
