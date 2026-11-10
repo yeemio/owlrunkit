@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { parseProjectControlState } from "./project-control-parser.mjs";
 
 export const CONTRACT_VERSION = "0.2";
-export const CORE_VERSION = "0.24.1";
+export const CORE_VERSION = "0.25.0";
 export const RUNTIME_ROOT = ".owlcoda/runkit";
 
 const CORE_FILES = [
@@ -42,6 +42,7 @@ const CORE_FILES = [
   "lifecycle-orchestration.mjs",
   "offline-store.mjs",
   "outcome-presentation.mjs",
+  "peer-recovery.mjs",
   "onboarding-doctor.mjs",
   "onboarding-bootstrap.mjs",
   "owner-authority-trust.mjs",

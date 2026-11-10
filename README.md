@@ -91,7 +91,7 @@ recoverable without becoming the product's Business Truth.
 
 ## Current release
 
-`owlrunkit@0.24.1` is the current public release. Its main public surfaces
+`owlrunkit@0.25.0` is the version documented here. Its public surfaces
 include:
 
 - Project Driver and typed delivery lifecycle;
@@ -100,6 +100,7 @@ include:
 - Team Delivery read-only recommendations and portable transfer packets;
 - bounded compact-session Hook Recovery;
 - optional native Codex Stop continuation on a bound RunKit file event;
+- managed local peer recovery for isolated macOS workers;
 - completed-project drift detection and read-only successor scaffolding;
 - fail-closed bootstrap, profile, registry, Core, and shared-Skill diagnostics.
 
@@ -110,14 +111,14 @@ public source tag.
 
 ## Install
 
-This package is the lifecycle-stable, registry-gated `owlrunkit@0.24.1`
+This package is the lifecycle-stable, registry-gated `owlrunkit@0.25.0`
 artifact published on the official npm registry. Project adoption verifies the
 exact registry version, shasum, integrity, and tarball URL; local tarballs,
 workspace links, Git URLs, and mutable dist-tags are never formal adoption
 provenance.
 
 ```bash
-npm install --save-exact owlrunkit@0.24.1
+npm install --save-exact owlrunkit@0.25.0
 ```
 
 Use `npx --no-install owlrunkit` for project commands. The package bootstrap
@@ -133,9 +134,9 @@ the project Config must independently bind the same Core.
 ```bash
 npx --no-install owlrunkit --version
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.24.1 --dry-run
+  --exact owlrunkit@0.25.0 --dry-run
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.24.1 --apply
+  --exact owlrunkit@0.25.0 --apply
 npx --no-install owlrunkit init --workspace /absolute/path/to/project
 npx --no-install owlrunkit doctor --workspace /absolute/path/to/project
 npx --no-install owlrunkit inspect --workspace /absolute/path/to/project --json --compact
@@ -967,6 +968,55 @@ that is its existing execution arrangement.
 Installing the package enables nothing and changes no global configuration,
 shared Skill or other workspace. This is same-session synchronous Stop
 continuation; fully idle Desktop wake requires a separate supported ingress.
+
+## Managed local peer recovery
+
+On macOS, opt a new task into peer recovery before starting its writer. The
+project controller names the current agent, successor, and exact checkpoint
+paths in `peer.json`, for example:
+
+```json
+{"owner":"alpha","successor":"bravo","paths":["result.txt"]}
+```
+
+```bash
+npx --no-install owlrunkit peer create --workspace . --task repair --request peer.json
+npx --no-install owlrunkit peer run --workspace . --task repair --agent alpha --generation 1 -- /absolute/worker
+npx --no-install owlrunkit peer inspect --workspace . --task repair
+npx --no-install owlrunkit peer recover --workspace . --task repair --agent bravo --generation 1 --revision 2
+```
+
+Run the last two commands from the cooperating agent while it is investigating
+an interruption. Use the actual generation and revision returned by `inspect`.
+Recovery requests a wake from the current worker. A matching, changed checkpoint
+keeps that worker in charge. If wake remains unconfirmed after the bounded wait,
+recovery can move ownership to the designated successor because the current
+attempt already runs in an isolated directory. One durable revision binds the
+successor generation to the last accepted checkpoint. The successor explicitly
+runs its own worker using that generation. An ACK or timeout is not a proof of
+worker death. Retry the same observed revision to read back a race or recovery.
+
+Use a local worker that speaks newline-delimited JSON. RunKit seeds the attempt
+directory from the previous checkpoint and sets `OWLRUNKIT_PEER_PATHS` to the
+ordered path array. The worker reads a wake challenge from stdin as
+`{"type":"wake","wakeId":"..."}`. Stdout is reserved for protocol messages.
+Report work as `{"type":"checkpoint","wakeId":"...","files":[{"path":"result.txt","content":"..."}]}`.
+Use the wake ID only when reporting progress in response to that challenge.
+The `files` array covers the exact ordered paths, with canonical base64 bytes
+or `null` for a missing file. The decoded checkpoint limit is 1 MiB. Emit
+`finish` with the same `files` shape to record the result. Human diagnostics
+go to stderr. `inspect` returns the checkpoint path and hash for handoff and
+review. Only accepted checkpoints seed the next attempt, and the previous
+scratch directory is reported for inspection while it remains on disk.
+
+The macOS backend confines each worker's writes to its own attempt and denies
+network and additional processes. The host caller explicitly authorizes the
+worker command, and supplies the peer identity. This is a supported boundary
+for contained workers and their checkpoints. An unmanaged file lease, a raw
+shared-directory writer, or an existing Desktop session needs its own recovery
+procedure. Legacy lease records and `control.lock` are untouched. The result
+is task evidence for the existing acceptance process. Canonical source
+integration remains a separate authorized step.
 
 ## Shared Skill upgrades
 

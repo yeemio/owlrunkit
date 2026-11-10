@@ -92,6 +92,12 @@ import {
   formatInspectHuman,
 } from "./inspect-presentation.mjs";
 import { buildHookRecoveryV1 } from "./hook-recovery.mjs";
+import {
+  createPeerRecoveryTask,
+  inspectPeerRecoveryTask,
+  recoverPeerTask,
+  runPeerTask,
+} from "./peer-recovery.mjs";
 import { attestQuickReceiptDetails } from "./quick-attest.mjs";
 import { readLocalQuickMetrics } from "./quick-metrics.mjs";
 import { runQuickEvidenceReuse } from "./quick-evidence-reuse.mjs";
@@ -265,6 +271,7 @@ Agent team projects
   npx --no-install owlrunkit project <init|assign|checkpoint|handoff|reject-and-return|reopen-upstream|transfer|work-item revise-scope|work-item require-evidence|reconcile|delivery record|decision|verification|capture|target-snapshot|import-delivery|status|takeover|successor|successor scaffold> [options]
   npx --no-install owlrunkit team <recommend|status|packet validate> [options]
   Durable project truth plus read-only Team recommendation and packet validation. No Agent dispatch.
+Managed local peer recovery: npx --no-install owlrunkit peer --help
 Core successor: npx --no-install owlrunkit core-successor <plan|apply|resume> --workspace . [...]
 Other onboarding commands:
   npx --no-install owlrunkit profiles validate --workspace .; npx --no-install owlrunkit profiles impact --workspace . --changed <path>
@@ -2443,6 +2450,52 @@ function requestCommand(options, handler) {
   return handler({ workspaceRoot: root, runId, request: readJson(requestPath) });
 }
 
+const PEER_HELP = `Usage:
+  owlrunkit peer create --workspace <dir> --task <id> --request <json>
+  owlrunkit peer inspect --workspace <dir> --task <id>
+  owlrunkit peer run --workspace <dir> --task <id> --agent <id> --generation <n> -- /absolute/worker [args]
+  owlrunkit peer recover --workspace <dir> --task <id> --agent <id> --generation <n> --revision <n> [--wait-ms <n>]
+`;
+
+function runPeerCommand(rest) {
+  const [action, ...args] = rest;
+  const separator = args.indexOf("--");
+  const optionArgs = separator === -1 ? args : args.slice(0, separator);
+  if (["--help", "-h"].includes(action) || optionArgs.includes("--help") || optionArgs.includes("-h")) {
+    return withHumanOutput({ status: "help", exitCode: 0, authorizationGranted: false }, PEER_HELP);
+  }
+  const flags = {
+    create: ["request"], inspect: [], run: ["agent", "generation"],
+    recover: ["agent", "generation", "revision", "wait-ms"],
+  };
+  if (!Object.hasOwn(flags, action) || (separator !== -1 && action !== "run")) {
+    throw new Error(PEER_HELP);
+  }
+  const options = parseOptions(optionArgs);
+  const allowed = new Set(["workspace", "task", "json", ...flags[action]]);
+  if (Object.keys(options).some(key => !allowed.has(key))) throw new Error(PEER_HELP);
+  const task = { workspaceRoot: workspace(options), taskId: requireOption(options, "task") };
+  if (action === "inspect") return inspectPeerRecoveryTask(task);
+  if (action === "create") {
+    const request = readJson(realpathSync(requireOption(options, "request")));
+    return createPeerRecoveryTask({ ...task, owner: request.owner,
+      successor: request.successor, paths: request.paths });
+  }
+  const peer = {
+    ...task, agent: requireOption(options, "agent"),
+    generation: parseCanonicalNonnegativeSafeInteger(requireOption(options, "generation"), "generation"),
+  };
+  if (action === "run") {
+    if (separator === -1) throw new Error(PEER_HELP);
+    return runPeerTask({ ...peer, command: args.slice(separator + 1) });
+  }
+  return recoverPeerTask({ ...peer,
+    revision: parseCanonicalNonnegativeSafeInteger(requireOption(options, "revision"), "revision"),
+    waitMs: options["wait-ms"] === undefined ? undefined
+      : parseCanonicalNonnegativeSafeInteger(options["wait-ms"], "wait-ms"),
+  });
+}
+
 export async function runCli(argv = process.argv.slice(2), runtimeHooks = {}) {
   try {
     const [command, ...rest] = argv;
@@ -2461,6 +2514,7 @@ export async function runCli(argv = process.argv.slice(2), runtimeHooks = {}) {
         authorizationGranted: false,
       }, `owlrunkit ${CORE_VERSION}\n`);
     }
+    if (command === "peer") return await runPeerCommand(rest);
     const separatorIndex = rest.indexOf("--");
     const acceptsExactCommand = command === "verify"
       || command === "quick-verify"

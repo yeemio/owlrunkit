@@ -1,39 +1,34 @@
 ---
 name: owlcoda-runkit
 description: Run receipt-backed, project-owned work with OwlCoda RunKit. Use when Codex needs to coordinate a large multi-Agent project, show per-Agent progress, manage dependencies or decisions, atomically return failed work for evidence-linked rework, import an external DeliveryPacket from a frozen target worktree, record intentionally deferred verification without repeating covered tests, hand work to another Agent, recover a blank-session next action, initialize or inspect `.owlcoda/runkit/`, plan bounded work with engine pins and leases, capture exact verification evidence, close an execution, produce a ready-for-commit receipt, or perform a read-only foreign-project shadow without widening Git or release authority.
-version: 0.24.1
-metadata:
-  openclaw:
-    requires:
-      bins:
-        - node
-        - npx
-    homepage: https://owlcoda.com/#start
 ---
 
 # OwlCoda RunKit
 
-Licensing: this skill package is MIT-0. The `owlrunkit` CLI it invokes is a
-separate work under GPL-3.0-or-later. See the `LICENSE` file in this directory.
-
-Skill package and CLI/Core versions have separate lifecycles. This Skill
-package `0.24.1` documents Core `owlrunkit@0.24.1` (Contract `0.2`). Older version
-numbers appearing in `references/` — including `0.18.3` — are historical
-compatibility notes and do not describe the current Core.
-
 Use the bundled deterministic Core to coordinate work through project artifacts rather than chat memory. Require Node.js 20 or later.
 
-Bundled registry-gated artifact: standalone `owlrunkit@0.24.1`, bundling Contract
-`0.2` and Core `0.24.1` with manifest
-`sha256:94aaa2e3a6d504374fa78cfcd341e31b33087806c9ddf5f84b3d3b47a6328e08`.
+Bundled registry-gated artifact: standalone `owlrunkit@0.25.0`, bundling Contract
+`0.2` and Core `0.25.0` with manifest
+`sha256:20e75c386f1408f11e908a6d3ee1a39316d9728d5719fa06f8d6a5aa45abd83e`.
 Registry adoption remains fail-closed until exact official npm registry
-provenance for `owlrunkit@0.24.1` is independently verified. The
-published rollback baseline for this artifact is `owlrunkit@0.24.0`, with SHA-1
-`9408b579faf58f85a3e8d7bd3d64c34256f85fe8` and canonical npm tarball URL
-`https://registry.npmjs.org/owlrunkit/-/owlrunkit-0.24.0.tgz`.
+provenance for `owlrunkit@0.25.0` is independently verified. The
+published rollback baseline for this artifact is `owlrunkit@0.24.1`, with SHA-1
+`b70b857c128f67d19d401acaa096a6cf9f1f348e` and canonical npm tarball URL
+`https://registry.npmjs.org/owlrunkit/-/owlrunkit-0.24.1.tgz`.
 The root `owlcoda` package has a separate version lifecycle.
 
 The session is an execution interface. Project artifacts are the system of record.
+
+## Optional managed local peer recovery
+
+For a task already enrolled in `owlrunkit peer` with an isolated worker, inspect
+the task when your cooperating agent stops progressing. As the designated
+successor, run `peer recover` with the observed generation and revision. A
+new checkpoint tied to the wake challenge keeps the original agent active.
+When recovery grants a successor generation, explicitly run the authorized
+worker in that generation and resume from its seeded checkpoint. Treat an ACK
+without progress as unconfirmed. Keep legacy shared-workspace leases on the
+manual recovery path. Use the package README and `peer --help` for setup.
 
 ## Optional file-event continuation
 
@@ -373,9 +368,9 @@ below has no CLI entry.
 
 ```bash
 npx --no-install owlrunkit bootstrap --workspace "$PROJECT_ROOT" \
-  --exact owlrunkit@0.24.1 --dry-run
+  --exact owlrunkit@0.25.0 --dry-run
 npx --no-install owlrunkit bootstrap --workspace "$PROJECT_ROOT" \
-  --exact owlrunkit@0.24.1 --apply
+  --exact owlrunkit@0.25.0 --apply
 npx --no-install owlrunkit init --workspace "$PROJECT_ROOT"
 npx --no-install owlrunkit inspect --json --workspace "$PROJECT_ROOT"
 npx --no-install owlrunkit inspect --json --compact --workspace "$PROJECT_ROOT"

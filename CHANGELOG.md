@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.25.0
+
+- Adds opt-in same-host peer recovery for macOS-contained workers. A cooperating
+  agent can request a wake, observe a fresh correlated checkpoint, or continue
+  from the last checkpoint as the designated successor.
+- Records a single successor generation and rejects writes and checkpoint
+  submissions from the superseded attempt. Recovery remains scoped to the
+  managed task and preserves the existing manual path for legacy leases.
+- Retains 0.24.1 as the exact published rollback baseline.
+
 ## 0.24.1
 
 - Corrects the optional Stop hook to notify on RunKit data file changes, including

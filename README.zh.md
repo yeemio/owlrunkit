@@ -81,7 +81,7 @@ RunKit **不负责**：
 
 ## 当前版本
 
-当前公开版本是 `owlrunkit@0.24.1`，主要公开能力包括：
+本文对应 `owlrunkit@0.25.0`，主要公开能力包括：
 
 - Project Driver 和类型化交付生命周期；
 - Quick / Formal 验证及源码绑定回执；
@@ -89,6 +89,7 @@ RunKit **不负责**：
 - Team Delivery 只读建议与可移植交接包；
 - 严格有界的会话压缩恢复投影；
 - 可选的 RunKit 文件事件触发 Codex 原生 Stop hook 继续机制；
+- 受 macOS 隔离的同机代理唤醒和检查点接手；
 - 完成项目的后续漂移识别和只读 successor 草案；
 - bootstrap、profile、registry、Core 和共享 Skill 的 fail-closed 诊断。
 
@@ -114,12 +115,16 @@ Codex 0.162.0-alpha.2 原生探针已使用离线响应源验证，没有调用�
 完整配置、信任确认、关闭和恢复步骤见
 [英文设置说明](README.md#optional-codex-file-event-stop-hook)。
 
+## 同机代理恢复
+
+任务预先指定原代理、接手代理和检查点文件。发现协作方停滞后，接手代理用 `peer inspect` 查看执行代次与记录版本，再用 `peer recover` 发出唤醒请求。原代理若交回与本次请求对应的新检查点，可继续持有任务。超时后，系统可让指定代理在独立目录中从最近检查点接手，旧执行的迟到提交会被拒绝。此流程目前适用于通过 `peer run` 启动的 macOS 隔离执行。操作步骤和消息格式见[英文说明](README.md#managed-local-peer-recovery)。
+
 ## 安装
 
 请在项目中精确锁定版本，并始终使用项目本地 CLI：
 
 ```bash
-npm install --save-exact owlrunkit@0.24.1
+npm install --save-exact owlrunkit@0.25.0
 npx --no-install owlrunkit --version
 ```
 
@@ -127,9 +132,9 @@ npx --no-install owlrunkit --version
 
 ```bash
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.24.1 --dry-run
+  --exact owlrunkit@0.25.0 --dry-run
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.24.1 --apply
+  --exact owlrunkit@0.25.0 --apply
 npx --no-install owlrunkit doctor --workspace "$PWD"
 npx --no-install owlrunkit mode recommend --workspace "$PWD"
 ```
