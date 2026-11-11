@@ -95,6 +95,7 @@ import { buildHookRecoveryV1 } from "./hook-recovery.mjs";
 import {
   createPeerRecoveryTask,
   inspectPeerRecoveryTask,
+  recoverAndRunPeerTask,
   recoverPeerTask,
   runPeerTask,
 } from "./peer-recovery.mjs";
@@ -2454,7 +2455,7 @@ const PEER_HELP = `Usage:
   owlrunkit peer create --workspace <dir> --task <id> --request <json>
   owlrunkit peer inspect --workspace <dir> --task <id>
   owlrunkit peer run --workspace <dir> --task <id> --agent <id> --generation <n> -- /absolute/worker [args]
-  owlrunkit peer recover --workspace <dir> --task <id> --agent <id> --generation <n> --revision <n> [--wait-ms <n>]
+  owlrunkit peer recover --workspace <dir> --task <id> --agent <id> --generation <n> --revision <n> [--wait-ms <n>] [-- /absolute/worker [args]]
 `;
 
 function runPeerCommand(rest) {
@@ -2468,10 +2469,10 @@ function runPeerCommand(rest) {
     create: ["request"], inspect: [], run: ["agent", "generation"],
     recover: ["agent", "generation", "revision", "wait-ms"],
   };
-  if (!Object.hasOwn(flags, action) || (separator !== -1 && action !== "run")) {
+  if (!Object.hasOwn(flags, action) || (separator !== -1 && !["run", "recover"].includes(action))) {
     throw new Error(PEER_HELP);
   }
-  const options = parseOptions(optionArgs);
+  const options = parseOptions(optionArgs, { boolean: ["json"] });
   const allowed = new Set(["workspace", "task", "json", ...flags[action]]);
   if (Object.keys(options).some(key => !allowed.has(key))) throw new Error(PEER_HELP);
   const task = { workspaceRoot: workspace(options), taskId: requireOption(options, "task") };
@@ -2489,11 +2490,13 @@ function runPeerCommand(rest) {
     if (separator === -1) throw new Error(PEER_HELP);
     return runPeerTask({ ...peer, command: args.slice(separator + 1) });
   }
-  return recoverPeerTask({ ...peer,
+  const recovery = { ...peer,
     revision: parseCanonicalNonnegativeSafeInteger(requireOption(options, "revision"), "revision"),
     waitMs: options["wait-ms"] === undefined ? undefined
       : parseCanonicalNonnegativeSafeInteger(options["wait-ms"], "wait-ms"),
-  });
+  };
+  return separator === -1 ? recoverPeerTask(recovery)
+    : recoverAndRunPeerTask(recovery, args.slice(separator + 1));
 }
 
 export async function runCli(argv = process.argv.slice(2), runtimeHooks = {}) {

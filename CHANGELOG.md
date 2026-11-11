@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.25.1
+
+- Adds enforced Linux peer isolation for x86-64 and ARM64 with Landlock and
+  seccomp. The helper verifies kernel support before managed tasks start.
+- A cooperating agent can attach its worker command to `peer recover`.
+  A confirmed wake preserves the current owner. After takeover, exactly one
+  invocation starts the successor from the last accepted checkpoint.
+- On Linux, control transactions use an OS lock that is released on process
+  exit. The next transaction verifies interrupted state before proceeding.
+  Partial multi-file changes and ownerless directory locks still require
+  reconciliation. Legacy shared-directory worker leases remain explicit.
+
 ## 0.25.0
 
 - Adds opt-in same-host peer recovery for macOS-contained workers. A cooperating

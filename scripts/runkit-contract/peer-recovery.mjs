@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
-  closeSync, constants, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync,
+  accessSync, closeSync, constants, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync,
   mkdtempSync, openSync, readSync, readdirSync, realpathSync, unlinkSync,
   watch, writeFileSync,
 } from "node:fs";
@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { RUNTIME_ROOT, currentCoreIdentity } from "./core-contract.mjs";
+import { linuxRuntimeHelper } from "./linux-runtime.mjs";
 import { safeIdentifier } from "./provenance-common.mjs";
 import { resolveVerificationEnvelopeBackendV1 } from "./verification-envelope.mjs";
 
@@ -195,9 +196,29 @@ function projection(task, state) {
   };
 }
 
+export function resolvePeerRecoveryBackend() {
+  if (process.platform === "linux") {
+    try {
+      const executable = linuxRuntimeHelper();
+      if (!executable) return { available: false };
+      const result = spawnSync(executable, ["probe"], {
+        timeout: 3000, env: {}, stdio: ["ignore", "ignore", "pipe"], encoding: "utf8",
+      });
+      if (result.status === 0) {
+        return { available: true, id: "linux_landlock_seccomp_v1", executable,
+          digest: digest(regularBytes(executable, CHECKPOINT_LIMIT)) };
+      }
+      return { available: false, reason: result.stderr?.trim() || result.error?.code };
+    } catch (error) { return { available: false, reason: error.code }; }
+  }
+  return resolveVerificationEnvelopeBackendV1();
+}
+
 function requireBackend() {
-  const backend = resolveVerificationEnvelopeBackendV1();
-  if (!backend.available) throw new Error("peer_recovery_enforced_backend_unavailable");
+  const backend = resolvePeerRecoveryBackend();
+  if (!backend.available) {
+    throw new Error(["peer_recovery_enforced_backend_unavailable", backend.reason].filter(Boolean).join(": "));
+  }
   return backend;
 }
 
@@ -357,34 +378,57 @@ function reportExit(task, attemptId, processExit) {
   }
 }
 
-export async function runPeerTask({ workspaceRoot, taskId, agent, generation, command }) {
-  const backend = requireBackend();
-  safeIdentifier(agent, "current peer");
+function workerExecutable(command) {
   if (!Array.isArray(command) || !path.isAbsolute(command[0] ?? "")) {
     throw new Error("peer_recovery_absolute_worker_required");
   }
   const executable = realpathSync(command[0]);
   if (!lstatSync(executable).isFile()) throw new Error("peer_recovery_worker_invalid");
+  accessSync(executable, constants.X_OK);
+  return executable;
+}
+
+function existingHandoff(task, state, agent, generation) {
+  if (state.owner !== agent || state.generation !== generation || state.phase === "ready") return null;
+  const result = projection(task, state);
+  return state.phase === "exited" ? { ...result, exitCode: 2 } : result;
+}
+
+export async function runPeerTask({ workspaceRoot, taskId, agent, generation, command, handoff = false }) {
+  const backend = requireBackend();
+  safeIdentifier(agent, "current peer");
+  const executable = workerExecutable(command);
   const task = taskDirectory(workspaceRoot, taskId);
   const state = current(task);
   if (state.phase !== "ready" || state.owner !== agent || state.generation !== generation) {
+    const prior = handoff && existingHandoff(task, state, agent, generation);
+    if (prior) return prior;
     throw new Error("peer_recovery_attempt_not_available");
   }
   const id = randomUUID();
   const directory = mkdtempSync(path.join(realpathSync(tmpdir()), "owlrunkit-peer-"));
   materialize(checkpoint(task, state).files, directory);
-  const attempt = { id, directory, backend: backend.id };
+  const attempt = { id, directory, backend: backend.id,
+    ...(backend.digest ? { backendSha256: backend.digest } : {}) };
   const claimed = append(task, state, {
     attempt, phase: "running", processExit: null, event: "peer_attempt_started",
   });
-  if (!claimed) throw new Error("peer_recovery_attempt_already_claimed");
+  if (!claimed) {
+    const prior = handoff && existingHandoff(task, current(task), agent, generation);
+    if (prior) return prior;
+    throw new Error("peer_recovery_attempt_already_claimed");
+  }
 
   return new Promise((resolve, reject) => {
-    const child = spawn(backend.executable, ["-p", sandboxPolicy(executable, directory),
-      executable, ...command.slice(1)], {
+    const args = backend.id === "linux_landlock_seccomp_v1"
+      ? ["run", String(process.pid), directory]
+      : ["-p", sandboxPolicy(executable, directory)];
+    const child = spawn(backend.executable, [...args, executable, ...command.slice(1)], {
       cwd: directory, env: {
         PATH: "/usr/bin:/bin", TMPDIR: directory, OWLRUNKIT_PEER_ATTEMPT: id,
         OWLRUNKIT_PEER_PATHS: JSON.stringify(state.paths),
+        // An isolated worker cannot read host OpenSSL configuration.
+        ...(backend.id === "linux_landlock_seccomp_v1" ? { OPENSSL_CONF: "/dev/null" } : {}),
       }, stdio: ["pipe", "pipe", "pipe"],
     });
     let watcher, pending = Buffer.alloc(0), sentWake, protocolError = null;
@@ -439,4 +483,13 @@ export async function runPeerTask({ workspaceRoot, taskId, agent, generation, co
       wake();
     } catch (error) { stop(error); }
   });
+}
+
+export async function recoverAndRunPeerTask(options, command) {
+  workerExecutable(command);
+  const recovered = await recoverPeerTask(options);
+  if (recovered.generation !== options.generation + 1 || recovered.owner !== options.agent) {
+    return recovered;
+  }
+  return runPeerTask({ ...options, generation: recovered.generation, command, handoff: true });
 }

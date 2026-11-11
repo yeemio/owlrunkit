@@ -20,6 +20,7 @@ import {
   validateExecutionPin,
   validateLeaseOwnedPaths,
 } from "./core-contract.mjs";
+import { acquireRunKitControlLock } from "./control-transaction-lock.mjs";
 import { buildCoverageIndex } from "./coverage-adoption.mjs";
 import { validateVerificationReceiptGate } from "./verification-receipt-gate.mjs";
 import {
@@ -103,14 +104,7 @@ function acquireResumeLock(workspaceRoot) {
   const runtimeRoot = path.join(workspaceRoot, RUNTIME_ROOT);
   assertSafeDirectory(workspaceRoot, runtimeRoot, "RunKit runtime root");
   assertSafeDirectory(runtimeRoot, path.join(runtimeRoot, "executions"), "Executions directory");
-  const lockPath = path.join(runtimeRoot, "control.lock");
-  try {
-    mkdirSync(lockPath);
-  } catch (error) {
-    if (error?.code === "EEXIST") throw new Error("Another RunKit control transaction is already active.");
-    throw error;
-  }
-  return () => rmSync(lockPath, { recursive: true, force: true });
+  return acquireRunKitControlLock(runtimeRoot);
 }
 
 function activeRunIds(workspaceRoot) {

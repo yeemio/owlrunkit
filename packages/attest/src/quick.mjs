@@ -25,6 +25,11 @@ export { validQuickReceiptShape } from "./quick-receipt-contract.mjs";
 export const SUPPORTED_QUICK_CORE_IDENTITIES = Object.freeze([
   {
     contractVersion: "0.2",
+    coreVersion: "0.25.1",
+    coreManifestSha256: "sha256:0934a076b147847a4623bc89263b677c88088b493495fc74f11485985b7903b5",
+  },
+  {
+    contractVersion: "0.2",
     coreVersion: "0.25.0",
     coreManifestSha256: "sha256:20e75c386f1408f11e908a6d3ee1a39316d9728d5719fa06f8d6a5aa45abd83e",
   },

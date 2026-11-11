@@ -16,3 +16,7 @@ affiliation.
 OwlRunKit records delivery continuity and verification evidence. It does not
 grant Git, release, deployment, production, automation, money, or business
 authority, and it does not become the Business Truth of a domain product.
+
+The Linux helper binaries statically link musl. See
+[`peer-linux.MUSL-COPYRIGHT`](scripts/runkit-contract/peer-linux.MUSL-COPYRIGHT)
+for its copyright and license notices.

@@ -1,97 +1,142 @@
 # OwlRunKit
 
-**English** · [中文](README.zh.md)
+OwlRunKit is OwlCoda's Project Driver for cross-Agent project continuity and
+progression. Its execution, evidence, verification, and recovery substrate
+makes that continuity inspectable and recoverable. RunKit 0.18 keeps work
+moving across Agents and sessions through a typed direct flow while preserving
+the existing assurance, source, and evidence boundaries.
 
-[![npm](https://img.shields.io/npm/v/owlrunkit)](https://www.npmjs.com/package/owlrunkit)
-[![license](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
-[![node](https://img.shields.io/badge/node-%3E%3D20.19.0-339933)](package.json)
+RunKit 0.24.1 adds optional file-triggered Codex continuation. A native Stop
+hook waits for RunKit data file changes, then resumes the bound session to
+inspect the current project and continue its existing goal. It is disabled by default. See the setup below.
 
-> **Don't ask an AI agent whether it finished. Verify the candidate, evidence,
-> owner, and remaining authority.**
+RunKit 0.18.1 adds a human-first usage-mode recommendation that selects
+continuity and assurance independently. It keeps ordinary development light
+while preserving mandatory Formal routing for material safety and authority
+facts.
 
-OwlRunKit is an evidence-backed Project Driver for AI-agent delivery. It keeps
-the current objective, WorkItems, candidate identity, verification receipts,
-handoffs, rework, and delivery stage recoverable across agents, sessions, and
-worktrees.
+RunKit 0.18.2 is a focused dogfood patch for clearer CLI help, actionable
+checkpoint and canonical-path errors, bounded Quick output summaries, typed
+registry diagnostics, and explicit profile normalization previews.
 
-RunKit is deliberately not an agent launcher or an approval system around every
-command. Ordinary work stays light. Governance becomes stronger only when the
-facts require durable continuity or stronger assurance.
+RunKit 0.18.3 turns the next Sierac recovery dogfood findings into a smaller
+Quick surface: hash-bound stdin scripts, bounded opening and closing summaries,
+actionable-only receipt issues, optional one-command attestation, and concise
+metrics by default. It also adds one atomic failed-work return path and makes
+the bundled Skill's contract references self-contained.
 
-## What problem it solves
+RunKit 0.18.4 lets one controller project bind a separate frozen target
+worktree without installing dependencies or `.owlcoda` into that target. It
+captures an immutable entry snapshot, verifies an external DeliveryPacket,
+classifies visible dirty-overlay changes, and imports the candidate identity
+into Project Driver. Missing entry truth is reported as `candidate_only`, not
+as an attested delta. Tool-cache and dependency-environment changes are
+disclosed separately; unclassified source changes fail closed. The release
+also makes project-local `npx --no-install owlrunkit` the documented command
+surface so an older global binary cannot reinterpret newer project truth.
+Profile detection now exposes real uncovered source paths and copyable repair
+commands instead of reporting a non-actionable success. Takeover reports stale
+handoffs and the exact current-versus-previous external candidate delta.
+These additions use Profile Detection V3, Status/Takeover V2, Assurance Route
+V2, and Usage Mode Recommendation V2; the published predecessor contracts
+remain unchanged.
 
-Agent work often fails after the code is written:
+RunKit 0.19.0 consolidates the daily-use dogfood backlog into one release. It
+adds atomic onboarding, isolated Quick dependency/cache execution, bounded
+reuse of unchanged evidence, content-addressed output storage, explicit
+external-runtime and rollback truth, upstream rework propagation, atomic
+transfer actions, business-layer outcome projection, and local efficiency
+metrics. These conveniences do not weaken Formal routing or grant Git,
+release, deployment, production, or business authority.
 
-- a new session cannot tell which objective or candidate is current;
-- a green test is reused after the source changes;
-- an implementation result is mistaken for Git, release, deployment, or
-  business authorization;
-- a handoff loses the exact owner, evidence, or next legal action;
-- a completed work ledger is mistaken for a product that is live and accepted.
+RunKit 0.19.1 fixes mature-project onboarding when an existing owner profile
+already owns command IDs proposed by detection. Reconciliation now extends that
+sole command owner with the newly detected paths and authoritative command
+binding instead of creating a second profile with duplicate IDs. Existing
+owner profiles, strict validation, atomic rollback, and shared-Skill activation
+boundaries remain unchanged.
 
-OwlRunKit turns those boundaries into local, inspectable artifacts. It records
-what happened and what remains; it does not decide the business meaning of the
-result.
+RunKit 0.19.2 makes Formal Delivery easier to configure without weakening its
+sandbox. A read-only envelope preflight reports known backend, subprocess,
+temporary-directory, device-path, and protected runtime-root conflicts before
+candidate evidence is written. Failed envelope checks receive typed failure
+categories. Fully attested Quick receipts may be attached as source-bound
+`supplemental-local` or `networked` evidence, but remain explicitly non-gating
+and can never replace a Formal-eligible passed check.
 
-## Use only the weight you need
+The same candidate makes Project Driver completion honest: a completed
+WorkItem ledger without separate Git/release/deploy authority is visibly
+`code_complete_without_release_authority`, not a product-finished `next: none`.
+Independent verification requires a different assigned Agent. Append-only
+scope revision can widen or narrow a WorkItem after diagnosis without rewriting
+history, and missing Quick/Formal receipt references remain visible warnings.
 
-RunKit separates two concerns:
+RunKit 0.20 Phase 1 adds Team Delivery as a read-only coordination dimension
+over the existing Project Driver. `team recommend` exits for ordinary
+single-owner work, recommends Team only for real coordination facts, exposes
+owned-path conflicts and independent-acceptance gaps, and never dispatches an
+Agent. `team status` projects the existing project graph without storing a
+second graph. Three strict portable contracts—TeamTaskPacket V2,
+TeamAcceptancePacket V2, and CandidateTransferPacket V1—can be validated on a
+machine that does not have the local `manage-agent-team` Skill. This phase
+does not add automatic or assisted dispatch and does not change Quick or Formal
+assurance.
 
-- **continuity**: `none` or `project_driver`
-- **assurance**: `none`, `quick`, or `formal`
+RunKit 0.21 Phase 2 keeps Team Delivery read-only while making delivery truth
+explicit. Typed external Gates may block the relevant stage without parsing a
+domain product's documents. Source acceptance, integration, materialization, deployment, live
+readback, and product acceptance are separate evidence-bound lifecycle facts.
+Project Status V4 and Team Delivery Status V3 expose that progression and an
+explicit inventory of known-but-unmodeled candidates. An optional WorkItem
+policy can require a currently attested Quick receipt, and `fleet skill-plan`
+shows affected projects, active blockers, and copyable install/rollback commands
+without mutating the shared Skill. No command dispatches an Agent or raises
+assurance automatically.
 
-The user-facing presets are:
+The same phase adds a fixed-width canonical candidate ledger and
+controller-owned Foreign Quick. A controller running 0.21 may verify a
+disjoint frozen Git worktree without installing RunKit, changing package/lock
+files, or creating `.owlcoda/runkit` in that target. Doctor also exposes the
+package-bound and discovered process-wide Skill identities; it cannot prove which
+instructions an already-running Agent process loaded, so that field remains
+`unknown`.
 
-| Mode | Best fit | Effective behavior |
-|---|---|---|
-| `off` | analysis, docs, one-off exploration | no RunKit execution or receipt |
-| `light` | one low-risk frozen candidate | one focused Quick verification |
-| `managed` | multi-session or multi-stage delivery | Project Driver plus per-WorkItem assurance |
-| `formal` | irreversible, migration, security, permission, money, or explicit acceptance boundaries | strict candidate, lease, and evidence contract |
-| `auto` | default recommendation | chooses from current facts without granting authority |
+This release also folds in the upgrade-usability patch: cross-version bootstrap
+failures return copyable install and retry commands; `inspect --json --compact`
+omits historical payloads; Team receipt warnings are non-blocking, actionable,
+and grouped; doctor reports project CLI/Core separately from a process-level
+shared Skill; and formatting-only profile reconciliation is a zero-write apply.
 
-Long-running work does not automatically mean Formal. Production or release
-labels do not automatically mean Formal. Real risk, reversibility, writer and
-authority count, migrations, security, money, and explicit acceptance contracts
-determine the assurance level.
+RunKit 0.22 adds a dedicated Hook Recovery projection for Codex
+`SessionStart(source=compact)`. It exposes only the bounded project identity,
+objective digest/preview, current Project Driver gap, execution/lease summary,
+warnings, and false authority boundary needed for a consumer to decide whether
+the project matches its current chat goal. It does not infer chat intent, emit
+full execution or event history, change project state, dispatch an Agent, or
+raise assurance.
 
-## Product boundary
+RunKit 0.23 closes the continuity gap after a Project Driver ledger completes.
+Project Status V5 distinguishes an exactly terminal source workspace from a
+missing source baseline, an unavailable modeled target, and later unmodeled
+workspace drift. A read-only `project successor scaffold` can project the
+bounded delta and mechanically possible lanes for human review; it never
+creates a project, infers the next objective, dispatches an Agent, or grants
+authority.
 
-RunKit owns delivery continuity and evidence:
-
-```text
-objective + WorkItems
-  -> candidate identity
-  -> verification evidence
-  -> handoff / rework / recovery
-  -> source acceptance
-  -> integration
-  -> deployment
-  -> live readback
-  -> product acceptance
-```
-
-Each stage remains separate. Every result keeps
-`authorizationGranted=false` unless a different authorized system performs the
-external action.
-
-RunKit does **not** own:
-
-- a domain product's Business Truth, WorkCase, business semantics, or final
-  decision;
-- an executor's Attempt or Session identity;
-- Git, release, deployment, production, automation, money, or BusinessAction
-  authority;
-- automatic model selection or agent dispatch.
-
-Within the OwlCoda product family, [OwlCoda](https://github.com/yeemio/owlcoda)
-owns the governed business-execution architecture. Replaceable executors do the
-work. OwlRunKit makes delivery progression verifiable, transferable, and
-recoverable without becoming the product's Business Truth.
+The 0.18 Project Driver is a bounded surface for new projects and controlled
+dogfood. Its product name does not claim to be a general long-running,
+multi-phase, or enterprise control plane. Version 0.18 adds one bounded
+Project Successor operation: an Owner may archive the exact prior bytes of a
+derived-completed active project and install a different, empty V1 project as the sole
+active project. It is not a general migration or multi-project writer system.
+Incomplete projects stay on their current truth. Handoff and takeover do not
+automatically promote an authoritative writer. Core successor, release
+compatibility, publication, Project Successor, and project adoption remain
+separate authority boundaries.
 
 ## Current release
 
-`owlrunkit@0.25.0` is the version documented here. Its public surfaces
+`owlrunkit@0.25.1` is the version documented here. Its public surfaces
 include:
 
 - Project Driver and typed delivery lifecycle;
@@ -100,7 +145,7 @@ include:
 - Team Delivery read-only recommendations and portable transfer packets;
 - bounded compact-session Hook Recovery;
 - optional native Codex Stop continuation on a bound RunKit file event;
-- managed local peer recovery for isolated macOS workers;
+- managed local peer recovery for isolated macOS and Linux workers;
 - completed-project drift detection and read-only successor scaffolding;
 - fail-closed bootstrap, profile, registry, Core, and shared-Skill diagnostics.
 
@@ -111,14 +156,15 @@ public source tag.
 
 ## Install
 
-This package is the lifecycle-stable, registry-gated `owlrunkit@0.25.0`
-artifact published on the official npm registry. Project adoption verifies the
-exact registry version, shasum, integrity, and tarball URL; local tarballs,
-workspace links, Git URLs, and mutable dist-tags are never formal adoption
-provenance.
+This package is the lifecycle-stable, registry-gated `owlrunkit@0.25.1`
+artifact. Registry adoption remains fail-closed until its exact official npm
+version, shasum, integrity, and tarball URL are independently verified. Local
+tarballs remain candidate-test inputs and are never adoption provenance. Until
+that registry evidence exists, use the package only for isolated candidate
+verification; do not treat the command below as available release truth.
 
 ```bash
-npm install --save-exact owlrunkit@0.25.0
+npm install --save-exact owlrunkit@0.25.1
 ```
 
 Use `npx --no-install owlrunkit` for project commands. The package bootstrap
@@ -134,9 +180,9 @@ the project Config must independently bind the same Core.
 ```bash
 npx --no-install owlrunkit --version
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.25.0 --dry-run
+  --exact owlrunkit@0.25.1 --dry-run
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.25.0 --apply
+  --exact owlrunkit@0.25.1 --apply
 npx --no-install owlrunkit init --workspace /absolute/path/to/project
 npx --no-install owlrunkit doctor --workspace /absolute/path/to/project
 npx --no-install owlrunkit inspect --workspace /absolute/path/to/project --json --compact
@@ -219,7 +265,7 @@ receipt are not retroactively told to add Formal evidence.
 
 ## Project Driver: Coordinate a multi-Agent project
 
-RunKit keeps the project alive independently of any one Agent or chat.
+RunKit 0.18 keeps the project alive independently of any one Agent or chat.
 Initialize a definition, then use typed direct commands for the normal
 assignment, checkpoint, handoff, failed-work return, decision, integration,
 status, and takeover flow:
@@ -971,9 +1017,9 @@ continuation; fully idle Desktop wake requires a separate supported ingress.
 
 ## Managed local peer recovery
 
-On macOS, opt a new task into peer recovery before starting its writer. The
-project controller names the current agent, successor, and exact checkpoint
-paths in `peer.json`, for example:
+Opt a new task into peer recovery before starting its writer. The project
+controller names the current agent, successor, and exact checkpoint paths in
+`peer.json`, for example:
 
 ```json
 {"owner":"alpha","successor":"bravo","paths":["result.txt"]}
@@ -983,18 +1029,21 @@ paths in `peer.json`, for example:
 npx --no-install owlrunkit peer create --workspace . --task repair --request peer.json
 npx --no-install owlrunkit peer run --workspace . --task repair --agent alpha --generation 1 -- /absolute/worker
 npx --no-install owlrunkit peer inspect --workspace . --task repair
-npx --no-install owlrunkit peer recover --workspace . --task repair --agent bravo --generation 1 --revision 2
+npx --no-install owlrunkit peer recover --workspace . --task repair --agent bravo --generation 1 --revision 2 -- /absolute/successor-worker
 ```
 
-Run the last two commands from the cooperating agent while it is investigating
-an interruption. Use the actual generation and revision returned by `inspect`.
+The cooperating agent uses the last two commands when it observes an
+interruption and has authority to run the successor worker. Use the generation
+and revision returned by `inspect`.
 Recovery requests a wake from the current worker. A matching, changed checkpoint
 keeps that worker in charge. If wake remains unconfirmed after the bounded wait,
 recovery can move ownership to the designated successor because the current
 attempt already runs in an isolated directory. One durable revision binds the
-successor generation to the last accepted checkpoint. The successor explicitly
-runs its own worker using that generation. An ACK or timeout is not a proof of
-worker death. Retry the same observed revision to read back a race or recovery.
+successor generation to the last accepted checkpoint. With a worker command
+after `--`, recovery starts that worker after takeover and reports its result.
+A concurrent retry may report the already-started attempt. Without a command,
+the successor starts its own worker with `peer run`. An ACK or timeout does
+not prove worker death. Retry the observed revision to read back the handoff.
 
 Use a local worker that speaks newline-delimited JSON. RunKit seeds the attempt
 directory from the previous checkpoint and sets `OWLRUNKIT_PEER_PATHS` to the
@@ -1009,14 +1058,22 @@ go to stderr. `inspect` returns the checkpoint path and hash for handoff and
 review. Only accepted checkpoints seed the next attempt, and the previous
 scratch directory is reported for inspection while it remains on disk.
 
-The macOS backend confines each worker's writes to its own attempt and denies
-network and additional processes. The host caller explicitly authorizes the
-worker command, and supplies the peer identity. This is a supported boundary
-for contained workers and their checkpoints. An unmanaged file lease, a raw
-shared-directory writer, or an existing Desktop session needs its own recovery
-procedure. Legacy lease records and `control.lock` are untouched. The result
-is task evidence for the existing acceptance process. Canonical source
-integration remains a separate authorized step.
+The macOS and Linux backends confine writes to the attempt and deny network
+connections and new worker processes. Linux supports x86-64 and ARM64 with
+Landlock ABI 3 or later, seccomp filtering, and `close_range`. The packaged
+helper checks the effective policy before a managed task starts. It terminates
+the worker if the supervisor process is killed. The host caller supplies the
+worker command and peer identity. Existing Desktop sessions and writers using
+legacy shared-directory leases follow their own recovery procedure. An
+existing managed task remains pinned to the core that created it.
+
+Linux control transactions use a kernel lock and a marker in the runtime
+directory. If the process exits during an atomic lease operation, the next
+transaction reads the lease state from the committed artifact. For other
+transactions, automatic recovery requires unchanged control state. A partial
+transaction returns `runkit_control_reconciliation_required` and preserves its
+state. An older `control.lock` directory has no kernel ownership record and
+requires the existing explicit recovery procedure.
 
 ## Shared Skill upgrades
 

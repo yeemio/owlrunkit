@@ -1,11 +1,9 @@
 import {
   existsSync,
   lstatSync,
-  mkdirSync,
   readFileSync,
   readdirSync,
   realpathSync,
-  rmSync,
 } from "node:fs";
 import path from "node:path";
 
@@ -16,6 +14,7 @@ import {
   validateExecutionPin,
   validateLeaseOwnedPaths,
 } from "./core-contract.mjs";
+import { acquireRunKitControlLock } from "./control-transaction-lock.mjs";
 import {
   assertAllowedKeys,
   loadActiveExecution,
@@ -179,33 +178,25 @@ export function assertExecutionUnclosed(executionRoot, runId) {
   }
 }
 
-function acquireControlLock(workspaceRoot) {
+function acquireControlLock(workspaceRoot, options) {
   const runtimeRoot = path.join(workspaceRoot, RUNTIME_ROOT);
   safeDirectory(workspaceRoot, runtimeRoot, "RunKit runtime directory");
   safeDirectory(runtimeRoot, path.join(runtimeRoot, "executions"), "Executions directory");
-  const lockPath = path.join(runtimeRoot, "control.lock");
-  try {
-    mkdirSync(lockPath);
-  } catch (error) {
-    if (error?.code === "EEXIST") throw new Error("Another RunKit control transaction is already active.");
-    throw error;
-  }
-  return () => rmSync(lockPath, { recursive: true, force: true });
+  return acquireRunKitControlLock(runtimeRoot, options);
 }
 
-export function withControlTransaction(workspaceRoot, operation) {
-  const release = acquireControlLock(workspaceRoot);
+export function withControlTransaction(workspaceRoot, operation, options) {
+  const release = acquireControlLock(workspaceRoot, options);
+  let result;
   try {
-    const result = operation();
-    if (result && typeof result.then === "function") {
-      return Promise.resolve(result).finally(release);
-    }
-    release();
-    return result;
+    result = operation();
+    if (result && typeof result.then === "function") return Promise.resolve(result).finally(release);
   } catch (error) {
     release();
     throw error;
   }
+  release();
+  return result;
 }
 
 export function acquireLeaseWithinControlTransaction({ workspaceRoot, runId, workItemId, ownedPaths }) {
@@ -251,7 +242,8 @@ export function acquireLeaseWithinControlTransaction({ workspaceRoot, runId, wor
 }
 
 export function acquireLease(args) {
-  return withControlTransaction(args.workspaceRoot, () => acquireLeaseWithinControlTransaction(args));
+  return withControlTransaction(args.workspaceRoot, () => acquireLeaseWithinControlTransaction(args),
+    { atomicLease: true });
 }
 
 export function inspectLeases({ workspaceRoot, runId }) {
@@ -300,7 +292,8 @@ export function releaseLeaseWithinControlTransaction({ workspaceRoot, runId, wor
 }
 
 export function releaseLease(args) {
-  return withControlTransaction(args.workspaceRoot, () => releaseLeaseWithinControlTransaction(args));
+  return withControlTransaction(args.workspaceRoot, () => releaseLeaseWithinControlTransaction(args),
+    { atomicLease: true });
 }
 
 export function restoreLeaseWithinControlTransaction({ workspaceRoot, runId, workItemId }) {
