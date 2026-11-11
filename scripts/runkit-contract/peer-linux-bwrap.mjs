@@ -1,6 +1,8 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
-  accessSync, constants, lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync,
+  accessSync, closeSync, constants, fstatSync, lstatSync, mkdtempSync, openSync,
+  readFileSync, realpathSync, rmSync, statfsSync, writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -10,29 +12,119 @@ export const BUBBLEWRAP_PEER_BACKEND = "linux_bubblewrap_seccomp_v1";
 const SANDBOX_HELPER = "/owlrunkit-helper";
 const SANDBOX_WORKER = "/owlrunkit-worker";
 const WORK = "/work";
+const SYSTEM_BWRAP = "/usr/bin/bwrap";
+const FD_EXECUTABLE = "/proc/self/fd/3";
+const OVERFLOW_UID = 65534;
+const PROC_SUPER_MAGIC = 0x9fa0;
+const CAP_SYS_ADMIN = 1n << 21n;
+const MAX_EXECUTABLE_BYTES = 1024 * 1024;
 
-function trustedBubblewrap() {
-  const directories = ["/usr/bin", "/bin", "/usr/local/bin", ...(process.env.PATH ?? "").split(":")];
-  for (const directory of new Set(directories)) {
-    if (!path.isAbsolute(directory)) continue;
-    try {
-      const file = realpathSync(path.join(directory, "bwrap"));
-      const stat = lstatSync(file);
-      if (!stat.isFile() || stat.uid !== 0 || (stat.mode & 0o6022)) continue;
-      accessSync(file, constants.X_OK);
-      let parent = path.dirname(file);
-      for (;;) {
-        const entry = lstatSync(parent);
-        if (!entry.isDirectory() || entry.uid !== 0 || (entry.mode & 0o022)) break;
-        const next = path.dirname(parent);
-        if (parent === next) return file;
-        parent = next;
-      }
-    } catch (error) {
-      if (!["ENOENT", "EACCES", "ENOTDIR"].includes(error.code)) throw error;
-    }
+function rootOwnedPath(file, stat) {
+  if (stat.uid !== 0) return false;
+  let parent = path.dirname(file);
+  for (;;) {
+    const entry = lstatSync(parent);
+    if (!entry.isDirectory() || entry.uid !== 0 || (entry.mode & 0o022)) return false;
+    const next = path.dirname(parent);
+    if (parent === next) return true;
+    parent = next;
+  }
+}
+
+export function readOnlySystemBubblewrapIssue({ uid, uidMap, root, systemDirectories, mountId, mountInfo }) {
+  if (uid === 0 || uid === OVERFLOW_UID || uidMap.trim().split(/\s+/u).join(" ") !== `${uid} 0 1`) {
+    return "the caller is not the single mapped parent root UID";
+  }
+  if (!root.isDirectory() || root.uid !== uid || (root.mode & 0o022)
+    || !systemDirectories.every(entry =>
+      entry.isDirectory() && entry.uid === OVERFLOW_UID && !(entry.mode & 0o022))) {
+    return "the system directories do not match the remapped ownership boundary";
+  }
+
+  const mounts = mountInfo.trim().split("\n").map(line => {
+    const [description, filesystem] = line.split(" - ");
+    const [id, , device, , target, flags] = description.split(" ");
+    return { id, device, target, flags: flags?.split(",") ?? [], type: filesystem?.split(" ")[0] };
+  });
+  const system = mounts.find(mount => mount.id === mountId);
+  if (system?.target !== "/usr" || system.type !== "overlay"
+    || !["ro", "nosuid", "nodev"].every(flag => system.flags.includes(flag))) {
+    return "the opened executable is not on the protected read-only /usr mount";
+  }
+  if (mounts.some(mount => mount.device === system.device && mount.flags.includes("rw"))) {
+    return "the /usr mount has a writable alias";
   }
   return null;
+}
+
+function readOnlySystemPathIssue(file, stat, fd) {
+  if (file !== SYSTEM_BWRAP || stat.uid !== OVERFLOW_UID || process.getuid() !== process.geteuid()) {
+    return "the executable is outside the remapped system path";
+  }
+  if (statfsSync("/proc/self").type !== PROC_SUPER_MAGIC) return "the kernel mount information is unavailable";
+  const capabilities = /^CapPrm:\s*([0-9a-f]+)$/imu.exec(readFileSync("/proc/self/status", "utf8"))?.[1];
+  if (!capabilities || (BigInt(`0x${capabilities}`) & CAP_SYS_ADMIN)) {
+    return "the caller can reconfigure its system mounts or that capability could not be checked";
+  }
+  const mountId = /^mnt_id:\s*(\d+)$/mu.exec(readFileSync(`/proc/self/fdinfo/${fd}`, "utf8"))?.[1];
+  if (!mountId) return "the kernel did not identify the executable mount";
+  return readOnlySystemBubblewrapIssue({
+    uid: process.geteuid(),
+    uidMap: readFileSync("/proc/self/uid_map", "utf8"),
+    root: lstatSync("/"),
+    systemDirectories: [lstatSync("/usr"), lstatSync("/usr/bin")],
+    mountId,
+    mountInfo: readFileSync("/proc/self/mountinfo", "utf8"),
+  });
+}
+
+function openTrustedBubblewrap(expected) {
+  const directories = ["/usr/bin", "/bin", "/usr/local/bin", ...(process.env.PATH ?? "").split(":")];
+  const candidates = expected ? [expected.executable]
+    : [...new Set(directories)].filter(path.isAbsolute).map(dir => path.join(dir, "bwrap"));
+  let systemRejection;
+  for (const candidate of candidates) {
+    let fd;
+    let trusted = false;
+    try {
+      const executable = realpathSync(candidate);
+      if (expected && executable !== expected.executable) continue;
+      accessSync(executable, constants.X_OK);
+      fd = openSync(executable, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+      const stat = fstatSync(fd);
+      if (!stat.isFile() || (stat.mode & 0o6022) || stat.size > MAX_EXECUTABLE_BYTES) continue;
+      let trust = "root_owned";
+      if (!rootOwnedPath(executable, stat)) {
+        const issue = readOnlySystemPathIssue(executable, stat, fd);
+        if (issue) {
+          if (executable === SYSTEM_BWRAP) systemRejection = issue;
+          continue;
+        }
+        trust = "read_only_system_mount";
+      }
+      const sandboxDigest = `sha256:${createHash("sha256").update(readFileSync(fd)).digest("hex")}`;
+      if (expected && (expected.sandboxDigest !== sandboxDigest || expected.trust !== trust)) continue;
+      trusted = true;
+      return { executable, fd, sandboxDigest, trust };
+    } catch (error) {
+      if (!["ENOENT", "EACCES", "ENOTDIR", "ELOOP"].includes(error.code)) throw error;
+    } finally {
+      if (fd !== undefined && !trusted) closeSync(fd);
+    }
+  }
+  return { reason: ["trusted system Bubblewrap not found", systemRejection].filter(Boolean).join(": ") };
+}
+
+export function spawnBubblewrapPeer(backend, args, options) {
+  const launcher = openTrustedBubblewrap(backend);
+  if (launcher.fd === undefined) {
+    throw new Error(`Bubblewrap executable or trust changed after its self-test: ${launcher.reason}`);
+  }
+  try {
+    return spawn(FD_EXECUTABLE, args, { ...options, stdio: [...options.stdio, launcher.fd] });
+  } finally {
+    closeSync(launcher.fd);
+  }
 }
 
 export function bubblewrapPeerArgs({ helper, directory, worker, args, environment }) {
@@ -75,21 +167,22 @@ const probeWorker = `
 `;
 
 export function probeBubblewrapPeer(helper) {
-  const executable = trustedBubblewrap();
-  if (!executable) return { available: false, reason: "trusted system Bubblewrap not found" };
   const directory = mkdtempSync(path.join(realpathSync(tmpdir()), "owlrunkit-bwrap-probe-"));
+  let launcher;
   try {
+    launcher = openTrustedBubblewrap();
+    if (launcher.fd === undefined) return { available: false, reason: launcher.reason };
     const outside = path.join(directory, "outside");
     const work = path.join(directory, "work");
     writeFileSync(outside, "outside", { flag: "wx", mode: 0o600 });
     // Keep the sentinel outside the only writable bind.
     const scratch = mkdtempSync(work);
     writeFileSync(path.join(scratch, "probe-input"), "from host", { flag: "wx", mode: 0o600 });
-    const result = spawnSync(executable, bubblewrapPeerArgs({
+    const result = spawnSync(FD_EXECUTABLE, bubblewrapPeerArgs({
       helper, directory: scratch, worker: realpathSync(process.execPath),
       args: ["-e", probeWorker, outside], environment: {},
     }), {
-      cwd: scratch, env: {}, stdio: ["ignore", "ignore", "pipe"],
+      cwd: scratch, env: {}, stdio: ["ignore", "ignore", "pipe", launcher.fd],
       encoding: "utf8", timeout: 5000, maxBuffer: 65536,
     });
     if (result.status !== 0) {
@@ -100,10 +193,12 @@ export function probeBubblewrapPeer(helper) {
     if (readFileSync(confirmation, "utf8") !== "confined") {
       return { available: false, reason: "Bubblewrap self-test did not confirm enforcement" };
     }
-    return { available: true, id: BUBBLEWRAP_PEER_BACKEND, executable, helper };
+    const { executable, sandboxDigest, trust } = launcher;
+    return { available: true, id: BUBBLEWRAP_PEER_BACKEND, executable, sandboxDigest, trust, helper };
   } catch (error) {
     return { available: false, reason: `Bubblewrap self-test failed: ${error.code ?? error.message}` };
   } finally {
+    if (launcher?.fd !== undefined) closeSync(launcher.fd);
     rmSync(directory, { recursive: true, force: true });
   }
 }

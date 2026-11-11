@@ -29,10 +29,14 @@ const SELF_NORMALIZED_QUICK_CORE_VERSIONS = new Set([
   "0.25.0",
   "0.25.1",
   "0.25.2",
+  "0.25.3",
 ]);
 const EXACT_VERSION = /^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/;
 const SHA256_REF = /^sha256:[a-f0-9]{64}$/;
 const TRUSTED_PRIOR_CORE_IDENTITIES = new Map([
+  ["0.25.2", new Set([
+    "sha256:da816d343597b91c30e4f96c0a3d765bf5c00d6013d6bee430f58bc701399acc",
+  ])],
   ["0.25.1", new Set([
     "sha256:0934a076b147847a4623bc89263b677c88088b493495fc74f11485985b7903b5",
   ])],

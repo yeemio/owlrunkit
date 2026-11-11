@@ -10,7 +10,9 @@ import path from "node:path";
 
 import { RUNTIME_ROOT, currentCoreIdentity } from "./core-contract.mjs";
 import { linuxRuntimeHelper } from "./linux-runtime.mjs";
-import { BUBBLEWRAP_PEER_BACKEND, bubblewrapPeerArgs, probeBubblewrapPeer } from "./peer-linux-bwrap.mjs";
+import {
+  BUBBLEWRAP_PEER_BACKEND, bubblewrapPeerArgs, probeBubblewrapPeer, spawnBubblewrapPeer,
+} from "./peer-linux-bwrap.mjs";
 import { safeIdentifier } from "./provenance-common.mjs";
 import { resolveVerificationEnvelopeBackendV1 } from "./verification-envelope.mjs";
 
@@ -216,8 +218,7 @@ export function resolvePeerRecoveryBackend() {
         return { available: false, reason: [reason, fallback.reason].filter(Boolean).join("; ") };
       }
       const helperHash = digest(regularBytes(executable, CHECKPOINT_LIMIT));
-      const sandboxHash = digest(regularBytes(fallback.executable, CHECKPOINT_LIMIT));
-      return { ...fallback, digest: digest(JSON.stringify([helperHash, sandboxHash])) };
+      return { ...fallback, digest: digest(JSON.stringify([helperHash, fallback.sandboxDigest])) };
     } catch (error) { return { available: false, reason: error.code }; }
   }
   return resolveVerificationEnvelopeBackendV1();
@@ -418,7 +419,8 @@ export async function runPeerTask({ workspaceRoot, taskId, agent, generation, co
   const directory = mkdtempSync(path.join(realpathSync(tmpdir()), "owlrunkit-peer-"));
   materialize(checkpoint(task, state).files, directory);
   const attempt = { id, directory, backend: backend.id,
-    ...(backend.digest ? { backendSha256: backend.digest } : {}) };
+    ...(backend.digest ? { backendSha256: backend.digest } : {}),
+    ...(backend.trust ? { backendTrust: backend.trust } : {}) };
   const claimed = append(task, state, {
     attempt, phase: "running", processExit: null, event: "peer_attempt_started",
   });
@@ -448,9 +450,20 @@ export async function runPeerTask({ workspaceRoot, taskId, agent, generation, co
     } else {
       args = ["-p", sandboxPolicy(executable, directory), executable, ...command.slice(1)];
     }
-    const child = spawn(backend.executable, args, {
+    const options = {
       cwd: directory, env, stdio: ["pipe", "pipe", "pipe"],
-    });
+    };
+    let child;
+    try {
+      child = backend.id === BUBBLEWRAP_PEER_BACKEND
+        ? spawnBubblewrapPeer(backend, args, options)
+        : spawn(backend.executable, args, options);
+    } catch (error) {
+      try {
+        resolve(reportExit(task, id, { code: null, signal: null, protocolError: error.message, diagnostic: null }));
+      } catch (reportError) { reject(reportError); }
+      return;
+    }
     let watcher, pending = Buffer.alloc(0), sentWake, protocolError = null;
     let diagnostic = Buffer.alloc(0);
     const stop = error => {

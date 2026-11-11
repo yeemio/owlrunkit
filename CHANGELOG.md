@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.25.3
+
+- Accepts Bubblewrap on a verified read-only Linux system mount when the
+  platform remaps root and the system file owners appear as overflow UIDs.
+  RunKit runs the checked executable by descriptor and rechecks its identity
+  before starting each worker.
+- Ships the Linux helper build script and checksums with the npm package and
+  links to the exact corresponding public source tag from `SOURCE.md`.
+
 ## 0.25.2
 
 - Supports managed Linux worker recovery with system Bubblewrap when Landlock

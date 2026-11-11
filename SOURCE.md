@@ -1,16 +1,15 @@
 # Corresponding source
 
 OwlRunKit is distributed under GPL-3.0-or-later. The corresponding public
-source for this release is [OwlRunKit v0.25.2](https://github.com/yeemio/owlrunkit/tree/v0.25.2).
-It includes the JavaScript runtime, C source and build script for the Linux
-helpers, package metadata, public contracts, and bundled integration resources.
+source is [OwlRunKit v0.25.3](https://github.com/yeemio/owlrunkit/tree/v0.25.3).
+The npm package includes the JavaScript runtime, read-only verifier, C source,
+and [Linux helper build script](packages/runkit/build-linux-helper.sh).
+The distributed helpers statically link musl and include its copyright notice.
 
 ## Rebuild the Linux helpers
 
-Check out the public tag, then run these commands from its root. The helper
-build uses the Alpine 3.22 image and the compiler and Linux headers from its
-package repository. Build on each architecture or use a Docker environment
-that supports both build platforms.
+From the public tag or unpacked npm package, run the build on Linux x86-64
+and ARM64 using Alpine 3.22 with `build-base` and `linux-headers`.
 
 ```sh
 mkdir -p .build
@@ -23,6 +22,7 @@ done
 (cd .build && sha256sum -c ../LINUX-HELPERS.sha256)
 ```
 
-The npm tarball contains both helper executables alongside their C source and
-the musl copyright notice. Its official registry version, shasum, integrity,
-and tarball URL identify the published package.
+The authoritative release is identified by the npm registry version, shasum,
+integrity, and tarball URL. Local directories, `file:` dependencies, local
+tarballs, Git URLs, workspace links, and mutable dist-tags are not accepted as
+formal cross-project adoption evidence.

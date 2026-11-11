@@ -81,7 +81,7 @@ RunKit **不负责**：
 
 ## 当前版本
 
-本文对应 `owlrunkit@0.25.2`，主要公开能力包括：
+本文对应 `owlrunkit@0.25.3`，主要公开能力包括：
 
 - Project Driver 和类型化交付生命周期；
 - Quick / Formal 验证及源码绑定回执；
@@ -117,14 +117,14 @@ Codex 0.162.0-alpha.2 原生探针已使用离线响应源验证，没有调用�
 
 ## 同机代理恢复
 
-任务预先指定原代理、接手代理和检查点文件。发现协作方停滞后，接手代理用 `peer inspect` 查看执行代次与记录版本，再用 `peer recover` 发出唤醒请求。原代理若交回与本次请求对应的新检查点，可继续持有任务。超时后，系统可让指定代理在独立目录中从最近检查点接手，旧执行的迟到提交会被拒绝。在具备隔离后端的 macOS 或 Linux 上，可以在 `peer recover` 后附上已授权的继任 worker 命令，接手后直接启动。Linux 的 Landlock 不可用时，RunKit 会验证系统的 Bubblewrap 能否提供隔离，通过后才启动 worker。操作步骤和消息格式见[英文说明](README.md#managed-local-peer-recovery)。
+任务预先指定原代理、接手代理和检查点文件。发现协作方停滞后，接手代理用 `peer inspect` 查看执行代次与记录版本，再用 `peer recover` 发出唤醒请求。原代理若交回与本次请求对应的新检查点，可继续持有任务。超时后，系统可让指定代理在独立目录中从最近检查点接手，旧执行的迟到提交会被拒绝。在具备隔离后端的 macOS 或 Linux 上，可以在 `peer recover` 后附上已授权的继任 worker 命令，接手后直接启动。Linux 的 Landlock 不可用时，RunKit 会验证系统的 Bubblewrap 能否提供隔离，通过后才启动 worker。系统映射 root UID 的环境还会检查 bwrap 所在的只读挂载，并从校验过的文件描述符启动。操作步骤和消息格式见[英文说明](README.md#managed-local-peer-recovery)。
 
 ## 安装
 
 请在项目中精确锁定版本，并始终使用项目本地 CLI：
 
 ```bash
-npm install --save-exact owlrunkit@0.25.2
+npm install --save-exact owlrunkit@0.25.3
 npx --no-install owlrunkit --version
 ```
 
@@ -132,9 +132,9 @@ npx --no-install owlrunkit --version
 
 ```bash
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.25.2 --dry-run
+  --exact owlrunkit@0.25.3 --dry-run
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.25.2 --apply
+  --exact owlrunkit@0.25.3 --apply
 npx --no-install owlrunkit doctor --workspace "$PWD"
 npx --no-install owlrunkit mode recommend --workspace "$PWD"
 ```
