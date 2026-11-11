@@ -18,6 +18,7 @@
 #include <sys/prctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/syscall.h>
 #include <sys/xattr.h>
 #include <unistd.h>
@@ -61,7 +62,7 @@ static void allow_path(int ruleset, const char *path, uint64_t rights, int optio
     close(fd);
 }
 
-static void restrict_files(const char *directory, const char *worker)
+static void restrict_files(const char *directory, const char *worker, int probe)
 {
     const uint64_t read_tree = LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR;
     const uint64_t work = read_tree | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_TRUNCATE |
@@ -71,9 +72,18 @@ static void restrict_files(const char *directory, const char *worker)
         LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_MAKE_CHAR | LANDLOCK_ACCESS_FS_MAKE_BLOCK |
         LANDLOCK_ACCESS_FS_MAKE_SOCK | LANDLOCK_ACCESS_FS_MAKE_FIFO | LANDLOCK_ACCESS_FS_MAKE_SYM };
     long abi = syscall(SYS_landlock_create_ruleset, NULL, 0, LANDLOCK_CREATE_RULESET_VERSION);
-    if (abi < 0)
+    if (abi < 0) {
+        if (probe && (errno == ENOSYS || errno == EOPNOTSUPP)) {
+            perror("landlock_create_ruleset version");
+            _exit(77);
+        }
         fail("landlock_create_ruleset version");
+    }
     if (abi < 3) {
+        if (probe) {
+            fputs("Landlock ABI 3 is required\n", stderr);
+            _exit(77);
+        }
         errno = EOPNOTSUPP;
         fail("Landlock ABI 3 is required");
     }
@@ -160,7 +170,7 @@ static void restrict_syscalls(void)
         ALLOW_SYSCALL(faccessat), ALLOW_SYSCALL(faccessat2), ALLOW_SYSCALL(getdents64),
         ALLOW_SYSCALL(getcwd), ALLOW_SYSCALL(chdir), ALLOW_SYSCALL(fchdir), ALLOW_SYSCALL(readlinkat),
         ALLOW_SYSCALL(mkdirat), ALLOW_SYSCALL(unlinkat), ALLOW_SYSCALL(renameat),
-        ALLOW_SYSCALL(renameat2), ALLOW_SYSCALL(linkat), ALLOW_SYSCALL(symlinkat),
+        ALLOW_SYSCALL(renameat2), ALLOW_SYSCALL(linkat),
         ALLOW_SYSCALL(truncate), ALLOW_SYSCALL(ftruncate), ALLOW_SYSCALL(fsync), ALLOW_SYSCALL(fdatasync),
         ALLOW_SYSCALL(dup), ALLOW_SYSCALL(dup3), ALLOW_SYSCALL(pipe2),
         ALLOW_SYSCALL(mmap), ALLOW_SYSCALL(munmap), ALLOW_SYSCALL(mprotect), ALLOW_SYSCALL(mremap),
@@ -181,7 +191,7 @@ static void restrict_syscalls(void)
         ALLOW_SYSCALL(arch_prctl), ALLOW_SYSCALL(access), ALLOW_SYSCALL(open),
         ALLOW_SYSCALL(stat), ALLOW_SYSCALL(lstat), ALLOW_SYSCALL(readlink),
         ALLOW_SYSCALL(mkdir), ALLOW_SYSCALL(rmdir), ALLOW_SYSCALL(unlink),
-        ALLOW_SYSCALL(rename), ALLOW_SYSCALL(link), ALLOW_SYSCALL(symlink),
+        ALLOW_SYSCALL(rename), ALLOW_SYSCALL(link),
         ALLOW_SYSCALL(dup2), ALLOW_SYSCALL(pipe), ALLOW_SYSCALL(epoll_wait), ALLOW_SYSCALL(poll),
 #endif
         BPF_STMT(BPF_RET | BPF_K, DENIED),
@@ -191,6 +201,19 @@ static void restrict_syscalls(void)
     };
     if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &filter) < 0)
         fail("seccomp filter");
+}
+
+static void verify_bubblewrap_root(void)
+{
+    char directory[sizeof "/work"];
+    struct statvfs root, work;
+    if (!getcwd(directory, sizeof directory) || strcmp(directory, "/work") != 0 ||
+        statvfs("/", &root) < 0 || statvfs("/work", &work) < 0 ||
+        !(root.f_flag & ST_RDONLY) || (work.f_flag & ST_RDONLY) ||
+        access("/proc/self", F_OK) == 0 || errno != ENOENT) {
+        fputs("Unexpected Bubblewrap filesystem boundary\n", stderr);
+        _exit(125);
+    }
 }
 
 int main(int argc, char **argv)
@@ -203,21 +226,30 @@ int main(int argc, char **argv)
         fail("control flock");
     }
     int probe = argc == 2 && strcmp(argv[1], "probe") == 0;
-    if (!probe && (argc < 5 || strcmp(argv[1], "run") != 0))
+    int bubblewrap = argc >= 3 && strcmp(argv[1], "run-bwrap") == 0;
+    if (!probe && !bubblewrap && (argc < 5 || strcmp(argv[1], "run") != 0))
         return 125;
+    char **worker_argv = probe ? NULL : &argv[bubblewrap ? 2 : 4];
     if (!probe) {
-        char *end;
-        long parent = strtol(argv[2], &end, 10);
-        if (*end || parent <= 0 || prctl(PR_SET_PDEATHSIG, SIGKILL) < 0 || getppid() != parent)
+        long parent = getppid();
+        if (!bubblewrap) {
+            char *end;
+            parent = strtol(argv[2], &end, 10);
+            if (*end)
+                return 125;
+        }
+        if (parent <= 0 || prctl(PR_SET_PDEATHSIG, SIGKILL) < 0 || getppid() != parent)
             return 125;
+        if (bubblewrap)
+            verify_bubblewrap_root();
         struct stat worker;
-        if (stat(argv[4], &worker) < 0)
+        if (stat(worker_argv[0], &worker) < 0)
             fail("stat worker");
         if (worker.st_mode & (S_ISUID | S_ISGID)) {
             errno = EPERM;
             fail("set-id workers are unsupported");
         }
-        if (getxattr(argv[4], "security.capability", NULL, 0) >= 0) {
+        if (getxattr(worker_argv[0], "security.capability", NULL, 0) >= 0) {
             errno = EPERM;
             fail("file capabilities on workers are unsupported");
         }
@@ -228,7 +260,8 @@ int main(int argc, char **argv)
         fail("close inherited descriptors");
     if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
         fail("no_new_privs");
-    restrict_files(probe ? NULL : argv[3], probe ? NULL : argv[4]);
+    if (!bubblewrap)
+        restrict_files(probe ? NULL : argv[3], probe ? NULL : worker_argv[0], probe);
     restrict_syscalls();
     if (probe) {
         if (open("/etc/passwd", O_RDONLY) >= 0 || errno != EACCES ||
@@ -238,6 +271,6 @@ int main(int argc, char **argv)
         }
         return 0;
     }
-    execve(argv[4], &argv[4], environ);
+    execve(worker_argv[0], worker_argv, environ);
     fail("execve worker");
 }

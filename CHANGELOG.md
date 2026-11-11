@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.25.2
+
+- Supports managed Linux worker recovery with system Bubblewrap when Landlock
+  is unavailable. RunKit verifies the writable attempt, read-only sandbox
+  root, hidden host files, and seccomp process and network restrictions before
+  selecting the backend.
+- Keeps Landlock as the first Linux backend. If neither backend passes its
+  runtime probe, managed peer commands refuse to start.
+
 ## 0.25.1
 
 - Adds enforced Linux peer isolation for x86-64 and ARM64 with Landlock and

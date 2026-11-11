@@ -10,6 +10,7 @@ import path from "node:path";
 
 import { RUNTIME_ROOT, currentCoreIdentity } from "./core-contract.mjs";
 import { linuxRuntimeHelper } from "./linux-runtime.mjs";
+import { BUBBLEWRAP_PEER_BACKEND, bubblewrapPeerArgs, probeBubblewrapPeer } from "./peer-linux-bwrap.mjs";
 import { safeIdentifier } from "./provenance-common.mjs";
 import { resolveVerificationEnvelopeBackendV1 } from "./verification-envelope.mjs";
 
@@ -208,7 +209,15 @@ export function resolvePeerRecoveryBackend() {
         return { available: true, id: "linux_landlock_seccomp_v1", executable,
           digest: digest(regularBytes(executable, CHECKPOINT_LIMIT)) };
       }
-      return { available: false, reason: result.stderr?.trim() || result.error?.code };
+      const reason = result.stderr?.trim() || result.error?.code;
+      if (result.status !== 77) return { available: false, reason };
+      const fallback = probeBubblewrapPeer(executable);
+      if (!fallback.available) {
+        return { available: false, reason: [reason, fallback.reason].filter(Boolean).join("; ") };
+      }
+      const helperHash = digest(regularBytes(executable, CHECKPOINT_LIMIT));
+      const sandboxHash = digest(regularBytes(fallback.executable, CHECKPOINT_LIMIT));
+      return { ...fallback, digest: digest(JSON.stringify([helperHash, sandboxHash])) };
     } catch (error) { return { available: false, reason: error.code }; }
   }
   return resolveVerificationEnvelopeBackendV1();
@@ -420,16 +429,27 @@ export async function runPeerTask({ workspaceRoot, taskId, agent, generation, co
   }
 
   return new Promise((resolve, reject) => {
-    const args = backend.id === "linux_landlock_seccomp_v1"
-      ? ["run", String(process.pid), directory]
-      : ["-p", sandboxPolicy(executable, directory)];
-    const child = spawn(backend.executable, [...args, executable, ...command.slice(1)], {
-      cwd: directory, env: {
-        PATH: "/usr/bin:/bin", TMPDIR: directory, OWLRUNKIT_PEER_ATTEMPT: id,
-        OWLRUNKIT_PEER_PATHS: JSON.stringify(state.paths),
-        // An isolated worker cannot read host OpenSSL configuration.
-        ...(backend.id === "linux_landlock_seccomp_v1" ? { OPENSSL_CONF: "/dev/null" } : {}),
-      }, stdio: ["pipe", "pipe", "pipe"],
+    const environment = {
+      PATH: "/usr/bin:/bin", TMPDIR: directory, OWLRUNKIT_PEER_ATTEMPT: id,
+      OWLRUNKIT_PEER_PATHS: JSON.stringify(state.paths),
+    };
+    let args;
+    let env = environment;
+    if (backend.id === BUBBLEWRAP_PEER_BACKEND) {
+      args = bubblewrapPeerArgs({
+        helper: backend.helper, directory, worker: executable,
+        args: command.slice(1), environment,
+      });
+      env = {};
+    } else if (backend.id === "linux_landlock_seccomp_v1") {
+      args = ["run", String(process.pid), directory, executable, ...command.slice(1)];
+      // An isolated worker cannot read host OpenSSL configuration.
+      env.OPENSSL_CONF = "/dev/null";
+    } else {
+      args = ["-p", sandboxPolicy(executable, directory), executable, ...command.slice(1)];
+    }
+    const child = spawn(backend.executable, args, {
+      cwd: directory, env, stdio: ["pipe", "pipe", "pipe"],
     });
     let watcher, pending = Buffer.alloc(0), sentWake, protocolError = null;
     let diagnostic = Buffer.alloc(0);

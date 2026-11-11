@@ -136,7 +136,7 @@ separate authority boundaries.
 
 ## Current release
 
-`owlrunkit@0.25.1` is the version documented here. Its public surfaces
+`owlrunkit@0.25.2` is the version documented here. Its public surfaces
 include:
 
 - Project Driver and typed delivery lifecycle;
@@ -145,7 +145,7 @@ include:
 - Team Delivery read-only recommendations and portable transfer packets;
 - bounded compact-session Hook Recovery;
 - optional native Codex Stop continuation on a bound RunKit file event;
-- managed local peer recovery for isolated macOS and Linux workers;
+- managed local peer recovery for isolated macOS and Linux workers, with Bubblewrap when Landlock is unavailable;
 - completed-project drift detection and read-only successor scaffolding;
 - fail-closed bootstrap, profile, registry, Core, and shared-Skill diagnostics.
 
@@ -156,7 +156,7 @@ public source tag.
 
 ## Install
 
-This package is the lifecycle-stable, registry-gated `owlrunkit@0.25.1`
+This package is the lifecycle-stable, registry-gated `owlrunkit@0.25.2`
 artifact. Registry adoption remains fail-closed until its exact official npm
 version, shasum, integrity, and tarball URL are independently verified. Local
 tarballs remain candidate-test inputs and are never adoption provenance. Until
@@ -164,7 +164,7 @@ that registry evidence exists, use the package only for isolated candidate
 verification; do not treat the command below as available release truth.
 
 ```bash
-npm install --save-exact owlrunkit@0.25.1
+npm install --save-exact owlrunkit@0.25.2
 ```
 
 Use `npx --no-install owlrunkit` for project commands. The package bootstrap
@@ -180,9 +180,9 @@ the project Config must independently bind the same Core.
 ```bash
 npx --no-install owlrunkit --version
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.25.1 --dry-run
+  --exact owlrunkit@0.25.2 --dry-run
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.25.1 --apply
+  --exact owlrunkit@0.25.2 --apply
 npx --no-install owlrunkit init --workspace /absolute/path/to/project
 npx --no-install owlrunkit doctor --workspace /absolute/path/to/project
 npx --no-install owlrunkit inspect --workspace /absolute/path/to/project --json --compact
@@ -1060,10 +1060,13 @@ scratch directory is reported for inspection while it remains on disk.
 
 The macOS and Linux backends confine writes to the attempt and deny network
 connections and new worker processes. Linux supports x86-64 and ARM64 with
-Landlock ABI 3 or later, seccomp filtering, and `close_range`. The packaged
-helper checks the effective policy before a managed task starts. It terminates
-the worker if the supervisor process is killed. The host caller supplies the
-worker command and peer identity. Existing Desktop sessions and writers using
+seccomp filtering and `close_range`. RunKit tries Landlock ABI 3 or later
+first. If Landlock is unavailable, it can use a trusted system Bubblewrap
+executable with user and mount namespaces. The Bubblewrap probe verifies
+that the attempt is writable, host files are hidden, and new processes and
+network sockets are denied. If the probe fails, the task stays blocked.
+On Linux, the worker is terminated if its supervisor is killed. The host
+caller supplies the worker command and peer identity. Existing Desktop sessions and writers using
 legacy shared-directory leases follow their own recovery procedure. An
 existing managed task remains pinned to the core that created it.
 

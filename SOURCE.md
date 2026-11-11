@@ -1,7 +1,7 @@
 # Corresponding source
 
 OwlRunKit is distributed under GPL-3.0-or-later. The corresponding public
-source for this release is [OwlRunKit v0.25.1](https://github.com/yeemio/owlrunkit/tree/v0.25.1).
+source for this release is [OwlRunKit v0.25.2](https://github.com/yeemio/owlrunkit/tree/v0.25.2).
 It includes the JavaScript runtime, C source and build script for the Linux
 helpers, package metadata, public contracts, and bundled integration resources.
 
