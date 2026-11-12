@@ -1,167 +1,74 @@
 # OwlRunKit
 
-[English](README.md) · **中文**
+[English](README.md) · **中文** · [使用指南（英文）](docs/guide.md) · [发布记录](https://github.com/yeemio/owlrunkit/releases)
 
 [![npm](https://img.shields.io/npm/v/owlrunkit)](https://www.npmjs.com/package/owlrunkit)
-[![license](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
-[![node](https://img.shields.io/badge/node-%3E%3D20.19.0-339933)](package.json)
+[![GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
-> **别问 AI 做完没有，看候选、证据、责任人和剩余权限。**
+OwlRunKit 是面向 AI 代理的本地项目协调工具。它把目标、责任人、源码候选、检查点和验证回执保存在项目里，让下一位代理接手时能看清做到哪里、依据是什么、下一步该做什么。
 
-OwlRunKit 是面向 AI Agent 交付的证据型 Project Driver。它把当前目标、
-WorkItem、候选身份、验证回执、交接、返工和交付阶段保存在项目里，让工作跨
-Agent、跨会话、跨 worktree 后仍可恢复、可核对。
+## 全景架构
 
-RunKit 不是 Agent 启动器，也不是包裹每条命令的审批系统。普通开发应保持轻量；
-只有真实连续性需求或风险事实出现时，才增加治理强度。
+![OwlRunKit 全景架构。项目主控、当前代理和指定接手代理通过项目状态、代理恢复和验证机制协作。操作系统隔离 worker 执行，交付记录按阶段保存证据。](docs/images/architecture-zh.png)
 
-## 它解决什么问题
+<details>
+<summary>播放架构动画</summary>
 
-AI 写完代码之后，真正昂贵的错误通常是：
+![架构动画依次演示确定范围与责任人、隔离执行、协作代理接手，以及从验证到交付的证据流转。](docs/images/architecture-zh.gif)
 
-- 新会话不知道当前目标和候选到底是哪一个；
-- 源码已经变化，却继续复用旧的绿色测试；
-- 把实现完成误说成已获 Git、发布、部署或业务授权；
-- 交接时丢失责任人、证据和唯一合法下一步；
-- 把工单账完成误说成产品已经上线并通过业务验收。
+</details>
 
-OwlRunKit 把这些边界变成本地、可检查的工程事实。它记录发生了什么、还缺什么，
-但不替业务产品解释结果的业务含义。
+宿主提供触发协作代理的机制。代理决定下一步并提供 worker 命令。RunKit 记录归属，检查状态是否仍符合预期，再把结果和证据绑定起来。操作系统负责强制隔离 worker。Git、发布和部署各自需要独立授权。
 
-## 只使用需要的重量
+## 唤醒还是接手
 
-RunKit 把两个问题正交拆开：
+![指定接手代理读取任务状态并请求恢复。收到匹配的新检查点时，原代理继续执行。原执行已退出或唤醒未确认时，指定代理可以接手。](docs/images/recovery-zh.png)
 
-- **连续性（continuity）**：`none` 或 `project_driver`
-- **验收强度（assurance）**：`none`、`quick` 或 `formal`
+1. **执行前确定协作关系。** 任务预先指定当前代理、接手代理，以及允许写入检查点的文件。
+2. **用新检查点确认进展。** 协作代理发现停滞或退出后，用 `peer inspect` 读取执行代次与状态修订号，再请求恢复。旧 worker 仍在运行时，RunKit 会发出带 ID 的唤醒请求。只有带着同一 ID 返回有变化的检查点，才算确认进展。单独的 ACK 无法确认进展。
+3. **从最近的有效检查点接手。** 原执行已退出，或者在限定时间内没有确认唤醒，RunKit 就可以在一条持久化记录中将下一代任务的归属切换给指定代理。过期的接手请求和旧 worker 的迟到上报会被拒绝。接手代理可以在 `peer recover` 里附上 worker 命令，接手后直接续跑。
 
-用户看到五种模式：
+[接手命令与 worker 消息协议](docs/guide.md#managed-local-peer-recovery)
 
-| 模式 | 适合场景 | 实际行为 |
-|---|---|---|
-| `off` | 分析、文档、一次性探索 | 不创建 RunKit execution 或 receipt |
-| `light` | 一个低风险冻结候选 | 一次聚焦 Quick 验证 |
-| `managed` | 跨会话或多阶段交付 | Project Driver，加每个 WorkItem 自己需要的证据 |
-| `formal` | 不可逆、迁移、安全、权限、资金或明确正式验收 | 严格候选、lease 与 evidence 合同 |
-| `auto` | 默认推荐 | 根据当前事实选择，但不授予任何外部权限 |
+## 隔离如何保护检查点
 
-周期长不等于必须 Formal；出现 production 或 release 标签也不等于必须 Formal。
-真正决定强度的是风险、可回滚性、writer/authority 数量、迁移、安全、资金和明确
-验收合同。
+每次执行都从最近一次已接受的检查点启动，worker 只能写入自己的独立目录，并向 RunKit 上报已声明的文件。原工作区保持完整，隔离后端阻止网络访问和新子进程。超时的旧 worker 可能仍在自己的目录里运行，RunKit 只接受当前执行的检查点上报。
 
-## 产品边界
+| 平台 | 受管 worker 的隔离方式 |
+| --- | --- |
+| macOS | 通过 `sandbox-exec` 使用系统隔离 |
+| Linux x86-64 和 ARM64 | 优先使用 Landlock 与 seccomp。Landlock 不可用时，可使用经过验证的系统 Bubblewrap 与 seccomp |
 
-RunKit 管交付连续性与证据：
+无法建立隔离时，RunKit 会拒绝启动。在系统属主被重新映射的 Linux 环境中，Bubblewrap 后备方案会检查只读 `/usr`，拒绝挂载根与它重叠的可写别名。`0.25.4` 支持同一 OverlayFS 上互不重叠的只读系统目录和可写工作区。
 
-```text
-目标 + WorkItems
-  -> 候选身份
-  -> 验证证据
-  -> 交接 / 返工 / 恢复
-  -> 源码验收
-  -> 集成
-  -> 部署
-  -> 线上读回
-  -> 产品验收
-```
+`0.25.4` 正式 npm 包已在这种挂载布局的 Linux x86-64 云电脑上通过受管 worker 强杀测试。接手者从检查点续跑并完成任务，原工作区保持完整。真实模型会话之间的端到端接手仍待验证。[v0.25.4 发布记录](https://github.com/yeemio/owlrunkit/releases/tag/v0.25.4)
 
-每一层都独立。除非另一个有授权的系统真正执行外部动作，所有结果始终保持
-`authorizationGranted=false`。
+## 交付证据如何流转
 
-RunKit **不负责**：
+- **项目状态。** Project Driver 记录分工、交接、返工和剩余工作。Team Delivery 提示协调需求、写入范围冲突和验收缺口。
+- **候选和回执。** Quick 和 Formal 验证回执绑定确切的源码候选。交接时一并传递责任人、证据和下一步。
+- **交付阶段。** 分别记录源码验收、集成、候选落地、部署、线上读回和产品验收。
+- **会话连续性。** 会话压缩后，可读紧凑恢复视图核对目标。可选的 Codex Stop hook 能在绑定的 RunKit 文件变化时让仍在等待的会话继续。代理接手机制用于预先配置的受管 worker。
 
-- 领域产品的 Business Truth、WorkCase、业务语义或最终决策；
-- 执行器的 Attempt 或 Session 身份；
-- Git、发布、部署、生产、自动化、资金或 BusinessAction 权限；
-- 自动选模型或自动派发 Agent。
+[项目协作](docs/guide.md#project-driver-coordinate-a-multi-agent-project) · [验证模式](docs/guide.md#choose-auto-off-light-managed-or-formal) · [Codex Stop hook 配置](docs/guide.md#optional-codex-file-event-stop-hook)
 
-在 OwlCoda 产品家族中，[OwlCoda](https://github.com/yeemio/owlcoda) 负责受治理的
-业务执行架构，可替换执行器负责实际执行，OwlRunKit 让交付进度可验证、可移交、
-可恢复，但不会成为业务产品的 Business Truth。
+## 安装与上手
 
-## 当前版本
-
-本文对应 `owlrunkit@0.25.4`，主要公开能力包括：
-
-- Project Driver 和类型化交付生命周期；
-- Quick / Formal 验证及源码绑定回执；
-- 控制 worktree 与冻结目标 worktree 分离；
-- Team Delivery 只读建议与可移植交接包；
-- 严格有界的会话压缩恢复投影；
-- 可选的 RunKit 文件事件触发 Codex 原生 Stop hook 继续机制；
-- macOS 和 Linux 上的隔离代理唤醒和检查点接手；
-- 完成项目的后续漂移识别和只读 successor 草案；
-- bootstrap、profile、registry、Core 和共享 Skill 的 fail-closed 诊断。
-
-本仓库是 OwlRunKit 的公开对应源码、文档、Issue、Release 和信任入口。日常开发
-仍在私有源码仓库进行；每个受 GPL 覆盖的 npm 版本都必须对应一个精确公开源码
-Tag。
-
-## 可选的文件事件触发
-
-0.24.1 默认关闭此功能。V2 配置只绑定规范工作区、项目 ID、实际 Codex 会话 ID
-和等待时限。Codex 在同步 Stop hook 中等待；RunKit 数据文件内容变化会通知
-原会话继续检查项目，包括 `waiting_dependency`，无需指定 checkpoint 状态、
-event ID、assignment 或冻结候选，也无需更改 ZCode 交付格式。
-
-等待使用操作系统文件通知，无定时模型调用。内容游标合并未变的重复通知并防止
-并发重复继续；绑定编辑、临时文件、控制锁和 Hook 自己的记录不会触发通知。
-继续后的 Stop 不自动重进等待。继续请求只是通知，不代表验收或新增权限；
-Codex 继续按原授权工作，需要时通过 Computer Use 驱动既有 ZCode 执行器。
-
-原会话必须仍在 Stop hook 中等待，不能重新启动已完全结束的空闲 Desktop 回合。
-Codex 0.162.0-alpha.2 原生探针已使用离线响应源验证，没有调用真实付费模型。
-安装包不启用 Hook、不更改全局配置或其他项目。旧 V1 绑定需显式换成 V2；
-完整配置、信任确认、关闭和恢复步骤见
-[英文设置说明](README.md#optional-codex-file-event-stop-hook)。
-
-## 同机代理恢复
-
-任务预先指定原代理、接手代理和检查点文件。发现协作方停滞后，接手代理用 `peer inspect` 查看执行代次与记录版本，再用 `peer recover` 发出唤醒请求。原代理若交回与本次请求对应的新检查点，可继续持有任务。超时后，系统可让指定代理在独立目录中从最近检查点接手，旧执行的迟到提交会被拒绝。在具备隔离后端的 macOS 或 Linux 上，可以在 `peer recover` 后附上已授权的继任 worker 命令，接手后直接启动。Linux 的 Landlock 不可用时，RunKit 会验证系统的 Bubblewrap 能否提供隔离，通过后才启动 worker。系统映射 root UID 的环境还会检查 bwrap 所在的只读挂载，并从校验过的文件描述符启动。操作步骤和消息格式见[英文说明](README.md#managed-local-peer-recovery)。
-
-## 安装
-
-请在项目中精确锁定版本，并始终使用项目本地 CLI：
+需要 Node.js 20.19 或更新版本。请在项目中锁定精确版本，并使用项目本地 CLI。
 
 ```bash
 npm install --save-exact owlrunkit@0.25.4
 npx --no-install owlrunkit --version
+npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.4 --dry-run
+npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.4 --apply
+npx --no-install owlrunkit doctor --workspace .
 ```
 
-首次接入或跨版本升级，先做只读预检，再应用：
+查看推荐模式和当前项目状态：
 
 ```bash
-npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.25.4 --dry-run
-npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.25.4 --apply
-npx --no-install owlrunkit doctor --workspace "$PWD"
-npx --no-install owlrunkit mode recommend --workspace "$PWD"
+npx --no-install owlrunkit mode recommend --workspace .
+npx --no-install owlrunkit inspect --workspace . --json --compact
 ```
 
-不要用可能指向旧版本的裸全局 `owlrunkit` 命令解释项目真值。
-
-## 最小日常用法
-
-普通低风险候选可以只跑一次 Quick：
-
-```bash
-npx --no-install owlrunkit quick-verify \
-  --workspace "$PWD" --attest -- npm test
-```
-
-跨会话项目先看紧凑状态：
-
-```bash
-npx --no-install owlrunkit inspect --workspace "$PWD" --json --compact
-npx --no-install owlrunkit project status --workspace "$PWD"
-```
-
-完整命令、合同和安全边界见英文 README 后续章节，以及
-[`docs/architecture`](docs/architecture/) 下的公共合同。
-
-## 许可证与安全
-
-OwlRunKit 按 [`GPL-3.0-or-later`](LICENSE) 发布。安全问题请按
-[SECURITY.md](SECURITY.md) 私下报告；贡献方式见
-[CONTRIBUTING.md](CONTRIBUTING.md)。
+[完整使用指南](docs/guide.md) · [公开合同](docs/architecture/) · [对应源码与 Linux helper 构建](SOURCE.md) · [许可证](LICENSE) · [安全](SECURITY.md) · [贡献](CONTRIBUTING.md)
