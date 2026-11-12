@@ -551,8 +551,12 @@ export function importExternalDeliveryV1({
   packetPath,
   entrySnapshotId = null,
   apply = false,
+  expectedReviewSha256 = null,
   onAfterPacketVerification,
 }) {
+  if (expectedReviewSha256 !== null && (!apply || !/^sha256:[a-f0-9]{64}$/u.test(expectedReviewSha256))) {
+    throw new Error("Expected review SHA-256 requires --apply and a canonical digest.");
+  }
   safeIdentifier(deliveryId, "deliveryId");
   safeIdentifier(producerId, "producerId");
   occurredAt = validateTimestamp(occurredAt, "External delivery occurredAt");
@@ -667,6 +671,25 @@ export function importExternalDeliveryV1({
     targetWritePerformed: false,
     authorizationGranted: false,
   };
+  const reviewSha256 = artifactSha256({ event, allowedPaths });
+  const review = {
+    reviewSha256,
+    allowedPaths,
+    allowedChangedPaths: overlay.overlayAttested
+      ? overlay.changedPaths.filter(filePath => allowedBy(filePath, allowedPaths)) : null,
+    writeAttribution: "unverified",
+  };
+  if (expectedReviewSha256 !== null && expectedReviewSha256 !== reviewSha256) {
+    return {
+      status: "external_delivery_rejected",
+      exitCode: 2,
+      deliveryId,
+      issueCodes: ["external_delivery_review_changed"],
+      persisted: false,
+      targetWritePerformed: false,
+      authorizationGranted: false,
+    };
+  }
   if (!apply) {
     return {
       status: "external_delivery_preview",
@@ -679,6 +702,7 @@ export function importExternalDeliveryV1({
       deliveryCandidateFingerprint: packetGate.declaredFingerprint,
       workspaceSnapshotFingerprint: currentSnapshot.sourceFingerprint,
       overlay,
+      ...review,
       proven: boundary.proven,
       notProven: boundary.notProven,
       persisted: false,
@@ -700,6 +724,7 @@ export function importExternalDeliveryV1({
     deliveryCandidateFingerprint: packetGate.declaredFingerprint,
     workspaceSnapshotFingerprint: currentSnapshot.sourceFingerprint,
     overlay,
+    ...review,
     proven: boundary.proven,
     notProven: boundary.notProven,
     eventId: recorded.eventId,

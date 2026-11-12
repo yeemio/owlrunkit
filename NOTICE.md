@@ -3,8 +3,8 @@
 OwlRunKit is an independent package in the OwlCoda product family. It is not
 affiliated with any model vendor, coding-agent vendor, or hosted agent service.
 
-The OwlRunKit CLI, Core, contracts, and embedded attestation source on the
-default branch are available under the [MIT License](LICENSE). This MIT grant
+The OwlRunKit CLI, Core, contracts, and embedded attestation source in this
+distribution are available under the [MIT License](LICENSE). This MIT grant
 also applies to [`peer-linux.c`](scripts/runkit-contract/peer-linux.c), whose
 historical SPDX header records the existing GPL grant. Keeping that source
 byte-identical preserves the corresponding Core fingerprint.

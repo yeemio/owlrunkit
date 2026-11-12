@@ -43,7 +43,15 @@ OwlRunKit 是面向 AI 代理的本地项目协调工具。它把目标、责任
 
 无法建立隔离时，RunKit 会拒绝启动。在系统属主被重新映射的 Linux 环境中，Bubblewrap 后备方案会检查只读 `/usr`，拒绝挂载根与它重叠的可写别名。`0.25.4` 支持同一 OverlayFS 上互不重叠的只读系统目录和可写工作区。
 
-`0.25.4` 正式 npm 包已在这种挂载布局的 Linux x86-64 云电脑上通过受管 worker 强杀测试。接手者从检查点续跑并完成任务，原工作区保持完整。真实模型会话之间的端到端接手仍待验证。[v0.25.4 发布记录](https://github.com/yeemio/owlrunkit/releases/tag/v0.25.4)
+`0.25.4` 正式 npm 包已在这种挂载布局的 Linux x86-64 云电脑上通过受管 worker 强杀测试。接手者从检查点续跑并完成任务，原工作区保持完整。[v0.25.4 发布记录](https://github.com/yeemio/owlrunkit/releases/tag/v0.25.4)
+
+## 交接前审查冻结候选
+
+用 `candidate verify --workspace . --candidate <path> --human` 查看冻结后哪些授权路径发生了变化、Git 基线是否移动，以及哪份 Formal 回执对应冻结候选。接手时，把同一路径传给 `project takeover --workspace . --agent <id> --candidate <path>`，即可同时看到候选、已绑定的 Quick 回执和下一步。
+
+`0.25.5` 已在临时测试仓库完成一次真实模型会话交接验收。两个独立的 Codex 会话核对了同一候选和 Quick 回执，继任者根据交接记录完成了下一项只读任务。
+
+[候选审查和接手命令](docs/guide.md#freeze-a-dirty-worktree-safely)
 
 ## 交付证据如何流转
 
@@ -59,10 +67,10 @@ OwlRunKit 是面向 AI 代理的本地项目协调工具。它把目标、责任
 需要 Node.js 20.19 或更新版本。请在项目中锁定精确版本，并使用项目本地 CLI。
 
 ```bash
-npm install --save-exact owlrunkit@0.25.4
+npm install --save-exact owlrunkit@0.25.5
 npx --no-install owlrunkit --version
-npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.4 --dry-run
-npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.4 --apply
+npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.5 --dry-run
+npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.5 --apply
 npx --no-install owlrunkit doctor --workspace .
 ```
 

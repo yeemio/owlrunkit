@@ -67,9 +67,22 @@ Disjoint writable subtrees on the same OverlayFS are supported in `0.25.4`.
 
 The `0.25.4` npm package passed a controlled worker crash test on a Linux
 x86-64 cloud host using this layout. The successor resumed from the
-checkpoint, completed the task, and preserved the workspace. Live model
-session handoff still needs end-to-end validation.
+checkpoint, completed the task, and preserved the workspace.
 [Release v0.25.4](https://github.com/yeemio/owlrunkit/releases/tag/v0.25.4)
+
+## Review a frozen candidate before handoff
+
+Run `candidate verify --workspace . --candidate <path> --human` to see which allowed
+paths changed after the freeze, whether the Git baseline moved, and which
+Formal check belongs to the frozen candidate. On takeover, pass the same
+path to `project takeover --workspace . --agent <id> --candidate <path>` to see the candidate and any
+bound Quick receipt alongside the next action.
+
+In a controlled `0.25.5` acceptance run, two independent Codex sessions
+read the same candidate and Quick receipt. The successor used the handoff
+record to complete the next read-only task in a temporary repository.
+
+[Candidate review and takeover](docs/guide.md#freeze-a-dirty-worktree-safely)
 
 ## How delivery stays verifiable
 
@@ -95,10 +108,10 @@ Use Node.js 20.19 or later. Install the exact version in your project and
 invoke the project-local CLI.
 
 ```bash
-npm install --save-exact owlrunkit@0.25.4
+npm install --save-exact owlrunkit@0.25.5
 npx --no-install owlrunkit --version
-npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.4 --dry-run
-npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.4 --apply
+npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.5 --dry-run
+npx --no-install owlrunkit bootstrap --workspace . --exact owlrunkit@0.25.5 --apply
 npx --no-install owlrunkit doctor --workspace .
 ```
 

@@ -1,11 +1,16 @@
 import { spawnSync } from "node:child_process";
 import {
   chmodSync,
+  closeSync,
+  constants,
   cpSync,
   existsSync,
+  fstatSync,
   lstatSync,
   mkdirSync,
+  openSync,
   readFileSync,
+  readSync,
   realpathSync,
   renameSync,
   rmSync,
@@ -87,20 +92,22 @@ function compareUnicodeCodeUnits(left, right) {
   return 0;
 }
 
-function git(workspaceRoot, args, label, { trim = true } = {}) {
+function git(workspaceRoot, args, label, { trim = true, encoding = "utf8", localOnly = false } = {}) {
   const completed = spawnSync("git", ["-C", workspaceRoot, ...args], {
-    encoding: "utf8",
+    encoding,
     maxBuffer: 64 * 1024 * 1024,
+    ...(localOnly ? { env: { ...process.env, GIT_NO_LAZY_FETCH: "1", GIT_NO_REPLACE_OBJECTS: "1" } } : {}),
   });
   if (completed.error) throw completed.error;
   if (completed.status !== 0) {
-    throw new Error(`${label} failed: ${completed.stderr.trim()}`);
+    throw new Error(`${label} failed: ${completed.stderr.toString().trim()}`);
   }
   return trim ? completed.stdout.trim() : completed.stdout;
 }
 
 function parseStatus(workspaceRoot) {
   const raw = git(workspaceRoot, [
+    "--no-optional-locks",
     "status",
     "--porcelain=v1",
     "-z",
@@ -926,10 +933,146 @@ export function freezeSourceCandidateV2(options) {
   );
 }
 
+const MAX_REVIEW_PATHS = 256;
+
+function reviewWorktreeFile(root, filePath) {
+  try {
+    const file = inspectManifestPath(root, filePath, { mustExist: true });
+    const fd = openSync(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    try {
+      const stat = fstatSync(fd);
+      if (!stat.isFile() || stat.size > SOURCE_CANDIDATE_V2_MAX_BYTES) {
+        throw new Error("Source candidate review file is unsupported.");
+      }
+      const bytes = Buffer.allocUnsafe(stat.size + 1);
+      let length = 0;
+      while (length < bytes.length) {
+        const count = readSync(fd, bytes, length, bytes.length - length, null);
+        if (count === 0) break;
+        length += count;
+      }
+      if (length !== stat.size) throw new Error("Source file changed during candidate review.");
+      return { sha256: sha256(bytes.subarray(0, length)), executable: Boolean(stat.mode & 0o111) };
+    } finally {
+      closeSync(fd);
+    }
+  } catch (error) {
+    if (error.code === "ENOENT" && inspectManifestPath(root, filePath, { mustExist: false }) === null) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function reviewGitFile(root, head, filePath) {
+  const entry = git(root, [
+    "--literal-pathspecs", "ls-tree", "-z", head, "--", filePath,
+  ], "Frozen Git tree", { trim: false, localOnly: true });
+  if (entry === "") return null;
+  const match = /^(100644|100755) blob ([0-9a-f]+)\t([^\0]+)\0$/u.exec(entry);
+  if (!match || match[3] !== filePath) throw new Error("Frozen Git entry is unsupported.");
+  const bytes = git(root, ["cat-file", "blob", match[2]], "Frozen Git blob", {
+    encoding: null, trim: false, localOnly: true,
+  });
+  return { sha256: sha256(bytes), executable: match[1] === "100755" };
+}
+
+function observeReviewPaths(root, candidate) {
+  const baseline = currentBaseline(root);
+  const { ownedPaths, entries } = candidate.sourceManifest;
+  const affected = new Set();
+  const renames = [];
+  for (const entry of entries) {
+    affected.add(entry.path);
+    if (entry.previousPath) affected.add(entry.previousPath);
+  }
+  for (const record of parseStatus(root)) {
+    const paths = record.paths.filter(filePath => isOwned(filePath, ownedPaths));
+    if (paths.length === 0) continue;
+    if (record.status.includes("U") || ["AA", "DD"].includes(record.status)
+      || (record.status.includes("R") && paths.length !== 2)) {
+      throw new Error("The candidate review cannot compare an unmerged or cross-scope path.");
+    }
+    paths.forEach(filePath => affected.add(filePath));
+    if (record.status.includes("R")) renames.push(record.paths);
+  }
+  if (candidate.baseline.head !== baseline.head) {
+    const committed = git(root, [
+      "diff", "--no-ext-diff", "--no-textconv", "--find-renames=100%", "--name-status", "-z",
+      candidate.baseline.head, baseline.head, "--",
+    ], "Git baseline delta", { trim: false, localOnly: true }).split("\0");
+    for (let index = 0; index < committed.length - 1;) {
+      const status = committed[index++];
+      const firstPath = committed[index++];
+      if (!firstPath || !/^(?:[ADMT]|R100)$/u.test(status)) {
+        throw new Error("Git emitted an unsupported baseline delta.");
+      }
+      if (isOwned(firstPath, ownedPaths)) affected.add(firstPath);
+      if (status !== "R100") continue;
+      const secondPath = committed[index++];
+      if (!secondPath) throw new Error("Git emitted an incomplete rename.");
+      if (isOwned(secondPath, ownedPaths)) {
+        affected.add(secondPath);
+        if (isOwned(firstPath, ownedPaths)) renames.push([secondPath, firstPath]);
+      }
+    }
+  }
+  if (affected.size > MAX_REVIEW_PATHS
+    || [...affected].some(filePath => !safeManifestPath(filePath))) {
+    throw new Error("The candidate review path list is unsupported.");
+  }
+  const files = [...affected].sort(compareUnicodeCodeUnits)
+    .map(filePath => [filePath, reviewWorktreeFile(root, filePath)]);
+  if (canonicalJson(baseline) !== canonicalJson(currentBaseline(root))) {
+    throw new Error("Git baseline changed during candidate review.");
+  }
+  return { baseline, files, renames };
+}
+
+function compareCandidateReview(root, candidate) {
+  try {
+    const before = observeReviewPaths(root, candidate);
+    const frozen = new Map(candidate.payload.entries.map(entry => [
+      entry.path, { sha256: entry.sha256, executable: Boolean(entry.mode & 0o111) },
+    ]));
+    for (const entry of candidate.sourceManifest.entries) {
+      if (entry.operation === "deleted") frozen.set(entry.path, null);
+      if (entry.previousPath) frozen.set(entry.previousPath, null);
+    }
+    const changes = new Map();
+    for (const [filePath, current] of before.files) {
+      const previous = frozen.has(filePath)
+        ? frozen.get(filePath)
+        : reviewGitFile(root, candidate.baseline.head, filePath);
+      if (canonicalJson(previous) === canonicalJson(current)) continue;
+      changes.set(filePath, {
+        path: filePath, change: previous === null ? "added" : current === null ? "deleted" : "modified",
+      });
+    }
+    for (const [destination, origin] of before.renames) {
+      if (changes.get(origin)?.change !== "deleted" || changes.get(destination)?.change !== "added") continue;
+      changes.delete(origin);
+      changes.set(destination, { path: destination, change: "renamed", previousPath: origin });
+    }
+    if (canonicalJson(before) !== canonicalJson(observeReviewPaths(root, candidate))) {
+      return { status: "unavailable", reason: "workspace_changed_during_review" };
+    }
+    return {
+      status: "compared",
+      currentBaseline: before.baseline,
+      baselineChanged: canonicalJson(candidate.baseline) !== canonicalJson(before.baseline),
+      changes: [...changes.values()],
+    };
+  } catch {
+    return { status: "unavailable", reason: "workspace_comparison_unavailable" };
+  }
+}
+
 export function verifySourceCandidateDetailsV2({
   workspaceRoot,
   candidatePath,
   requireCurrentWorkspace = true,
+  includeReview = false,
 }) {
   const root = realpathSync(workspaceRoot);
   const issueCodes = [];
@@ -986,7 +1129,8 @@ export function verifySourceCandidateDetailsV2({
       issueCodes.push("source_candidate_lease_unreadable");
     }
   }
-  if (issueCodes.length === 0 && requireCurrentWorkspace) {
+  const frozenCandidateValid = issueCodes.length === 0;
+  if (frozenCandidateValid && requireCurrentWorkspace) {
     try {
       const currentManifest = sourceManifestV2({
         workspaceRoot: root,
@@ -1015,6 +1159,38 @@ export function verifySourceCandidateDetailsV2({
     issueCodes: [...new Set(issueCodes)].sort(),
     authorizationGranted: false,
   };
+  if (includeReview && requireCurrentWorkspace) {
+    if (!frozenCandidateValid) {
+      gate.review = { status: "unavailable", reason: "frozen_candidate_invalid", nextAction: "inspect" };
+    } else {
+      const comparison = compareCandidateReview(root, candidate);
+      gate.review = {
+        candidateId: candidate.candidateId,
+        runId: candidate.runId,
+        workItemId: candidate.discovery.fromLease,
+        frozenBaseline: candidate.baseline,
+        allowedPaths: candidate.sourceManifest.ownedPaths,
+        ...comparison,
+        nextAction: comparison.status === "unavailable" ? "inspect"
+          : gate.status === "invalid" || comparison.changes.length > 0 || comparison.baselineChanged
+            ? "freeze_fresh_candidate" : "verify_receipts",
+      };
+      if (comparison.status === "compared") {
+        if (comparison.changes.length > 0 && !gate.issueCodes.includes("source_candidate_manifest_drift")) {
+          gate.issueCodes.push("source_candidate_manifest_drift");
+        }
+        if (comparison.baselineChanged && !gate.issueCodes.includes("source_candidate_baseline_drift")) {
+          gate.issueCodes.push("source_candidate_baseline_drift");
+        }
+        gate.issueCodes.sort();
+      }
+      if (comparison.reason === "workspace_changed_during_review") gate.issueCodes.push(comparison.reason);
+      if (gate.issueCodes.length > 0) {
+        gate.status = "invalid";
+        gate.exitCode = 2;
+      }
+    }
+  }
   return {
     gate,
     candidateDocument: gate.status === "valid" ? candidate : null,

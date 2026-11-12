@@ -7,14 +7,14 @@ description: Run receipt-backed, project-owned work with OwlCoda RunKit. Use whe
 
 Use the bundled deterministic Core to coordinate work through project artifacts rather than chat memory. Require Node.js 20 or later.
 
-Bundled registry-gated artifact: standalone `owlrunkit@0.25.4`, bundling Contract
-`0.2` and Core `0.25.4` with manifest
-`sha256:56a5ff4e5d84bf2436ef39b2e37a54d8c20236ef393c0c9dc54266b1e6dc6465`.
+Bundled registry-gated artifact: standalone `owlrunkit@0.25.5`, bundling Contract
+`0.2` and Core `0.25.5` with manifest
+`sha256:6f88a83d033b8c57eaa6150d77388b816c3003f2f8cac773f3a957796d4a9ea0`.
 Registry adoption remains fail-closed until exact official npm registry
-provenance for `owlrunkit@0.25.4` is independently verified. The
-published rollback baseline for this artifact is `owlrunkit@0.25.3`, with SHA-1
-`7e33016bd0e86a245993d3820c6c8ed57c974673` and canonical npm tarball URL
-`https://registry.npmjs.org/owlrunkit/-/owlrunkit-0.25.3.tgz`.
+provenance for `owlrunkit@0.25.5` is independently verified. The
+published rollback baseline for this artifact is `owlrunkit@0.25.4`, with SHA-1
+`37a0dbee3f383bd9ca321d66589be4a4025c1143` and canonical npm tarball URL
+`https://registry.npmjs.org/owlrunkit/-/owlrunkit-0.25.4.tgz`.
 The root `owlcoda` package has a separate version lifecycle.
 
 The session is an execution interface. Project artifacts are the system of record.
@@ -370,9 +370,9 @@ below has no CLI entry.
 
 ```bash
 npx --no-install owlrunkit bootstrap --workspace "$PROJECT_ROOT" \
-  --exact owlrunkit@0.25.4 --dry-run
+  --exact owlrunkit@0.25.5 --dry-run
 npx --no-install owlrunkit bootstrap --workspace "$PROJECT_ROOT" \
-  --exact owlrunkit@0.25.4 --apply
+  --exact owlrunkit@0.25.5 --apply
 npx --no-install owlrunkit init --workspace "$PROJECT_ROOT"
 npx --no-install owlrunkit inspect --json --workspace "$PROJECT_ROOT"
 npx --no-install owlrunkit inspect --json --compact --workspace "$PROJECT_ROOT"

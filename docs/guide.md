@@ -4,7 +4,7 @@
 
 ## Current release
 
-`owlrunkit@0.25.4` is the version documented here. Its public surfaces
+`owlrunkit@0.25.5` is the version documented here. Its public surfaces
 include:
 
 - Project Driver and typed delivery lifecycle;
@@ -24,12 +24,12 @@ tag and the license included in that release.
 
 ## Install
 
-Use the published `owlrunkit@0.25.4` package. Bootstrap verifies the exact npm
+Use the published `owlrunkit@0.25.5` package. Bootstrap verifies the exact npm
 version, shasum, integrity, and tarball URL before adopting it in a project.
 Use local tarballs for isolated candidate testing only.
 
 ```bash
-npm install --save-exact owlrunkit@0.25.4
+npm install --save-exact owlrunkit@0.25.5
 ```
 
 Use `npx --no-install owlrunkit` for project commands. The package bootstrap
@@ -45,9 +45,9 @@ the project Config must independently bind the same Core.
 ```bash
 npx --no-install owlrunkit --version
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.25.4 --dry-run
+  --exact owlrunkit@0.25.5 --dry-run
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.25.4 --apply
+  --exact owlrunkit@0.25.5 --apply
 npx --no-install owlrunkit init --workspace /absolute/path/to/project
 npx --no-install owlrunkit doctor --workspace /absolute/path/to/project
 npx --no-install owlrunkit inspect --workspace /absolute/path/to/project --json --compact
@@ -253,6 +253,12 @@ npx --no-install owlrunkit project import-delivery --workspace . \
 
 Both commands support `--dry-run` instead of `--apply`. Artifacts are written
 only under the controller's `.owlcoda/runkit/project`; the target is read-only.
+To bind an import to a preview, run `project import-delivery --dry-run`,
+review the observed allowed paths, then repeat with the same arguments and
+`--apply --expect-review-sha256 <reviewSha256>`. A new packet, changed target
+snapshot, or changed allowed scope requires another preview. A path lease
+prevents overlapping RunKit leases. The preview reports file changes with
+unverified write attribution, including for external processes.
 Controller and target must be disjoint real directories, and the target must
 be the exact Git worktree root rather than a nested repository directory.
 The imported Event V3 records `deliveryCandidateFingerprint`,
@@ -615,11 +621,23 @@ than producing an unreadable candidate.
 npx --no-install owlrunkit candidate freeze --workspace . --run-id release-001 \
   --from-lease delivery --candidate-id rc-001
 npx --no-install owlrunkit candidate verify --workspace . \
-  --candidate .owlcoda/runkit/executions/release-001/source-candidates/rc-001.json
+  --candidate .owlcoda/runkit/executions/release-001/source-candidates/rc-001.json --human
 npx --no-install owlrunkit candidate materialize --workspace . \
   --candidate .owlcoda/runkit/executions/release-001/source-candidates/rc-001.json \
   --target-workspace /absolute/clean/materialization
 ```
+
+The read-only review lists changed allowed paths and reports Git baseline
+changes separately. An unavailable comparison is explicit. An exact
+Formal check is shown with the commands that ran. After drift, its
+receipt is labeled as evidence for the frozen candidate. Omit `--human`
+for JSON.
+
+Include the candidate path in the handoff evidence. The successor can run
+`project takeover --workspace . --agent <id> --candidate <path>` to inspect
+that candidate with the pending handoff and next action. A bound Quick
+receipt is rechecked against the current workspace. Re-freeze a changed
+candidate and bind the applicable verification before handing it off.
 
 Materialization is create-only and verifies every byte. It applies payloads in
 a sibling staging checkout, then atomically switches the target directory.

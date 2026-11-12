@@ -1,6 +1,6 @@
 {
   "name": "owlrunkit",
-  "version": "0.25.4",
+  "version": "0.25.5",
   "description": "Project Driver for cross-Agent project continuity and progression; execution, evidence, verification, and recovery are the underlying trust substrate.",
   "license": "MIT",
   "author": "yeemio <owlclaw@163.com>",

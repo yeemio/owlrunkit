@@ -9,6 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  RUNTIME_ROOT,
   acceptedCloseoutVerificationIssues,
   validateCoreArtifact,
 } from "./core-contract.mjs";
@@ -630,6 +631,63 @@ function readChecks(workspaceRoot, executionRoot, runId) {
 
 export function readFormalChecksV1({ workspaceRoot, executionRoot, runId }) {
   return readChecks(realpathSync(workspaceRoot), executionRoot, runId);
+}
+
+export function reviewFrozenCandidateCheck({ workspaceRoot, candidatePath, candidateSha256, review }) {
+  const executionRoot = path.join(workspaceRoot, RUNTIME_ROOT, "executions", review.runId);
+  const fileName = `${review.candidateId}.json`;
+  const receiptPath = expectedFormalPath(workspaceRoot, executionRoot, "formal-checks", fileName);
+  if (!existsSync(path.join(workspaceRoot, receiptPath))) return { status: "none" };
+  try {
+    const check = readWorkspaceRegularJson(workspaceRoot, path.join(workspaceRoot, receiptPath), "Formal check");
+    if (check.candidatePath !== candidatePath || check.candidateSha256 !== candidateSha256) {
+      return { status: "candidate_mismatch" };
+    }
+    if (check.schemaVersion === "OwlCodaRunKitFormalCheckV1") {
+      const candidate = verifySourceCandidateDetailsV2({ workspaceRoot, candidatePath, requireCurrentWorkspace: false });
+      const snapshotPath = expectedFormalPath(workspaceRoot, executionRoot, "snapshots", `${review.candidateId}-snapshot.json`);
+      if (candidate.gate.candidateSha256 !== candidateSha256 || !candidate.candidateDocument
+        || check.runId !== review.runId || check.checkId !== review.candidateId
+        || check.authorizationGranted !== false || check.snapshotPath !== snapshotPath) {
+        return { status: "unavailable" };
+      }
+      const snapshot = readWorkspaceRegularJson(workspaceRoot, path.join(workspaceRoot, snapshotPath), "Formal snapshot");
+      const selectedFiles = Object.fromEntries(candidate.candidateDocument.payload.entries
+        .map(entry => [entry.path, entry.sha256]));
+      if (!verifySnapshotEvidence({ workspaceRoot, runId: review.runId, snapshot, requirePassed: false }).valid
+        || snapshot.targetRoot !== workspaceRoot
+        || snapshot.repositoryAfter.head !== review.frozenBaseline.head
+        || canonicalJson(snapshot.repositoryAfter.selectedFiles) !== canonicalJson(selectedFiles)
+        || snapshot.verificationContextFingerprint !== check.verificationContextFingerprint
+        || snapshot.command.exitCode !== check.commandExitCode
+        || check.status !== (snapshot.status === "snapshot_passed" ? "formal_check_passed" : "formal_check_failed")) {
+        return { status: "unavailable" };
+      }
+      return {
+        status: "bound", checkStatus: check.status, receiptPath,
+        commands: [{ phase: "check", argv: snapshot.command.evidence.argv, exitCode: snapshot.command.exitCode }],
+      };
+    }
+    validateFormalCheckV2({ workspaceRoot, executionRoot, runId: review.runId, fileName, check });
+    const receipt = readWorkspaceRegularJson(
+      workspaceRoot, path.join(workspaceRoot, check.envelopeReceiptPath), "Verification Envelope receipt",
+    );
+    const { receiptSha256, ...body } = receipt;
+    if (receiptSha256 !== check.envelopeReceiptSha256 || sha256(canonicalJson(body)) !== receiptSha256) {
+      return { status: "unavailable" };
+    }
+    return {
+      status: "bound",
+      checkStatus: check.status,
+      receiptPath,
+      receiptSha256: check.formalCheckSha256,
+      commands: receipt.phases.map(phase => ({
+        phase: phase.name, argv: [phase.executable, ...phase.argv], exitCode: phase.exitCode,
+      })),
+    };
+  } catch {
+    return { status: "unavailable" };
+  }
 }
 
 export function classifyFormalEnvelopeFailureV1({

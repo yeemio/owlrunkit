@@ -68,6 +68,7 @@ import {
   recordFormalCheckV1,
   recordFormalEnvelopeCheckV1,
   resumeCompletedFormalFinishV1,
+  reviewFrozenCandidateCheck,
   validateLegacyVerificationSideEffectsV1,
 } from "./formal-workflow.mjs";
 import {
@@ -83,6 +84,8 @@ import {
   freezeSourceCandidateV1,
   freezeSourceCandidateV2,
   materializeSourceCandidateV2,
+  SOURCE_CANDIDATE_V2_MAX_BYTES,
+  SOURCE_CANDIDATE_V2_MAX_NODES,
   verifySourceCandidateV1,
   verifySourceCandidateV2,
 } from "./source-candidate.mjs";
@@ -99,7 +102,7 @@ import {
   recoverPeerTask,
   runPeerTask,
 } from "./peer-recovery.mjs";
-import { attestQuickReceiptDetails } from "./quick-attest.mjs";
+import { attestCoreBoundQuickReceiptDetailsFromBytes, attestQuickReceiptDetails } from "./quick-attest.mjs";
 import { readLocalQuickMetrics } from "./quick-metrics.mjs";
 import { runQuickEvidenceReuse } from "./quick-evidence-reuse.mjs";
 import { runQuickVerification } from "./quick-verify.mjs";
@@ -174,6 +177,8 @@ import {
   inspectLocalMaintenanceV1,
   readAdoptionReadiness,
   readProfileLauncherReadiness,
+  readWorkspaceBytesBounded,
+  readWorkspaceJsonBounded,
   runDoctorV3,
 } from "./onboarding-doctor.mjs";
 import {
@@ -657,7 +662,10 @@ Runs the final source, evidence, permission, closeout, and lease-release path.
 Freezes the exact dirty source manifest, including deletions and renames.
 `,
   "candidate verify": `Usage:
-  npx --no-install owlrunkit candidate verify --workspace <directory> --candidate <file>
+  npx --no-install owlrunkit candidate verify --workspace <directory> --candidate <file> [--human]
+
+Compares the frozen owned paths with the current workspace and shows any exact
+Formal check bound to that candidate. Output defaults to JSON.
 `,
   "candidate materialize": `Usage:
   npx --no-install owlrunkit candidate materialize --workspace <directory> --candidate <file>
@@ -902,20 +910,23 @@ production, business, or other authorization.
     --delivery-id <id> --at <ISO-UTC> --assignment-id <current>
     --work-item <id> --producer <id> --target-workspace <frozen-worktree>
     --packet <delivery-packet.json> [--entry-snapshot <id>]
-    --dry-run|--apply [--json]
+    --dry-run|--apply [--expect-review-sha256 <sha256:digest>] [--json]
 
 Verifies the external DeliveryPacket against the read-only target and records
 candidate identity in Project Driver only with --apply. Without an entry
 snapshot it reports candidate_only and does not claim entry-to-candidate proof.
+Pass the review digest from a dry run to --apply to require the same reviewed bytes.
 No Git, release, deployment, production, business, or other authorization is granted.
 `,
   "project status": `Usage:
   npx --no-install owlrunkit project status --workspace <directory> [--json]
 `,
   "project takeover": `Usage:
-  npx --no-install owlrunkit project takeover --workspace <directory> --agent <id> [--json]
+  npx --no-install owlrunkit project takeover --workspace <directory> --agent <id>
+    [--candidate <file>] [--json]
 
 Builds a read-only blank-session recovery packet for one Agent.
+An explicit candidate must belong to the work item being handed off.
 `,
   "project successor": `Usage:
   npx --no-install owlrunkit project successor --workspace <directory> --transition-id <id> --at <ISO-UTC>
@@ -1059,6 +1070,8 @@ function formatExternalDeliveryHuman(result) {
   if (result.status === "external_delivery_rejected") {
     return [
       `Rejected external delivery ${result.deliveryId}.`,
+      ...(result.issueCodes?.includes("external_delivery_review_changed")
+        ? ["The reviewed delivery changed. Run --dry-run again before applying."] : []),
       `Out-of-scope source: ${result.overlay?.outOfScopeSourcePaths?.join(", ") || "none"}`,
       "Nothing was added to Project Driver; authorization granted: no.",
       "",
@@ -1070,12 +1083,96 @@ function formatExternalDeliveryHuman(result) {
       : `Previewed external delivery ${result.deliveryId}; nothing persisted.`,
     `Candidate: ${result.deliveryCandidateFingerprint}`,
     `Overlay: ${result.overlay.status}`,
+    `Allowed paths: ${result.allowedPaths.map(value => JSON.stringify(value)).join(", ")}`,
+    `Observed allowed paths: ${result.allowedChangedPaths
+      ? result.allowedChangedPaths.map(value => JSON.stringify(value)).join(", ") || "none"
+      : "entry comparison unavailable"}`,
+    `Review SHA-256: ${result.reviewSha256}`,
+    "Write attribution: unverified.",
     `Tool cache changes: ${result.overlay.toolCachePaths.join(", ") || "none"}`,
     `Dependency environment changes: ${result.overlay.dependencyEnvironmentPaths.join(", ") || "none"}`,
     `Not proven: ${result.notProven.join(" ")}`,
     "Target write: no; authorization granted: no.",
     "",
   ].join("\n");
+}
+
+function reviewCandidateForCli(root, candidatePath) {
+  const relative = safeRelativePath(candidatePath, "source candidate");
+  const candidate = readWorkspaceJsonBounded(root, relative, {
+    maxBytes: SOURCE_CANDIDATE_V2_MAX_BYTES, maxNodes: SOURCE_CANDIDATE_V2_MAX_NODES,
+  });
+  if (candidate.schemaVersion !== "OwlCodaRunKitSourceCandidateV2") {
+    return verifySourceCandidateV1({ workspaceRoot: root, candidatePath: relative });
+  }
+  const gate = verifySourceCandidateV2({ workspaceRoot: root, candidatePath: relative, includeReview: true });
+  if (!gate.review?.candidateId) return gate;
+  const verification = reviewFrozenCandidateCheck({
+    workspaceRoot: root, candidatePath: gate.candidatePath,
+    candidateSha256: gate.candidateSha256, review: gate.review,
+  });
+  return {
+    ...gate,
+    review: {
+      ...gate.review,
+      verification: verification.status === "bound" ? {
+        ...verification, appliesTo: gate.status === "valid" && gate.review.status === "compared"
+          ? "current_candidate" : "frozen_candidate_only",
+      } : verification,
+    },
+  };
+}
+
+function formatCandidateReviewHuman(gate) {
+  const review = gate.review;
+  const verification = review?.verification;
+  return [
+    `Candidate ${review?.candidateId ?? ""}: ${gate.status}`,
+    ...(gate.issueCodes?.length ? [`Issues: ${gate.issueCodes.join(", ")}`] : []),
+    ...(review?.frozenBaseline ? [
+      `Frozen Git HEAD: ${review.frozenBaseline.head}`,
+      `Source fingerprint: ${gate.sourceFingerprint}`,
+    ] : []),
+    ...(review?.status === "compared" ? [
+      `Current Git HEAD: ${review.currentBaseline.head}; baseline changed: ${review.baselineChanged}`,
+      `Changed allowed paths: ${review.changes.length}`,
+      ...review.changes.map(row => `  ${row.change} ${row.previousPath
+        ? `${JSON.stringify(row.previousPath)} -> ` : ""}${JSON.stringify(row.path)}`),
+    ] : [`Path comparison: ${review?.reason ?? "legacy candidate"}`]),
+    ...(verification ? [`Formal verification: ${verification.checkStatus ?? verification.status}${verification.appliesTo
+      ? ` (${verification.appliesTo})` : ""}`] : []),
+    ...(verification?.receiptPath ? [`Receipt: ${verification.receiptPath}`] : []),
+    ...(verification?.commands ?? []).map(command => `  ${command.phase} ${JSON.stringify(command.argv)} -> ${command.exitCode ?? "no exit code"}`),
+    ...(review?.nextAction ? [`Next: ${review.nextAction}`] : []),
+    "",
+  ].join("\n");
+}
+
+function reviewTakeoverQuickReceipt(root, binding) {
+  if (!binding) return null;
+  const { receiptRef, receiptSha256, sourceFingerprint, receiptId } = binding;
+  try {
+    const bytes = readWorkspaceBytesBounded(root, receiptRef);
+    const details = attestCoreBoundQuickReceiptDetailsFromBytes({
+      receiptPath: path.join(root, receiptRef), receiptBytes: bytes, workspaceRoot: root,
+    });
+    const { attestation } = details;
+    if (attestation.subjectRef?.receiptSha256 !== receiptSha256
+      || attestation.subjectRef?.receiptId !== receiptId || details.sourceFingerprint !== sourceFingerprint) {
+      return { status: "unavailable", receiptRef };
+    }
+    const receipt = JSON.parse(bytes.toString("utf8"));
+    return {
+      status: attestation.decision === "GO" ? "current_workspace" : "current_workspace_not_verified",
+      receiptRef,
+      receiptSha256,
+      sourceFingerprint,
+      argv: [receipt.exactCommand.executable, ...receipt.exactCommand.argv],
+      decision: attestation.decision,
+    };
+  } catch {
+    return { status: "unavailable", receiptRef };
+  }
 }
 
 function formatTeamProjectDecisionHuman(result) {
@@ -2687,7 +2784,7 @@ export async function runCli(argv = process.argv.slice(2), runtimeHooks = {}) {
         : command === "fleet" && action === "replace-registry"
           ? ["dry-run"]
         : command === "candidate"
-          ? ["delivery-v1"]
+          ? ["delivery-v1", "human"]
         : command === "core-successor" && action === "resume"
           ? ["adopt-orphan-success-receipts"]
         : command === "deployment" && action === "execute"
@@ -3669,23 +3766,8 @@ export async function runCli(argv = process.argv.slice(2), runtimeHooks = {}) {
         });
       }
       if (action === "verify") {
-        const root = workspace(options);
-        const candidatePath = requireOption(options, "candidate");
-        const candidate = readWorkspaceArtifact(
-          root,
-          candidatePath,
-          "source candidate",
-        );
-        if (candidate.schemaVersion === "OwlCodaRunKitSourceCandidateV2") {
-          return verifySourceCandidateV2({
-            workspaceRoot: root,
-            candidatePath,
-          });
-        }
-        return verifySourceCandidateV1({
-          workspaceRoot: root,
-          candidatePath,
-        });
+        const gate = reviewCandidateForCli(workspace(options), requireOption(options, "candidate"));
+        return options.human === true ? withHumanOutput(gate, formatCandidateReviewHuman(gate)) : gate;
       }
       if (action === "materialize") {
         return materializeSourceCandidateV2({
@@ -3797,10 +3879,10 @@ export async function runCli(argv = process.argv.slice(2), runtimeHooks = {}) {
         "import-delivery": [
           "workspace", "delivery-id", "at", "assignment-id", "work-item",
           "producer", "target-workspace", "packet", "entry-snapshot",
-          "dry-run", "apply", "json",
+          "dry-run", "apply", "expect-review-sha256", "json",
         ],
         status: ["workspace", "json"],
-        takeover: ["workspace", "agent", "json"],
+        takeover: ["workspace", "agent", "candidate", "json"],
         successor: ["workspace", "transition-id", "at", "definition", "reason", "json"],
         "successor scaffold": ["workspace", "from-workspace", "dry-run", "json"],
       };
@@ -3846,6 +3928,7 @@ export async function runCli(argv = process.argv.slice(2), runtimeHooks = {}) {
           packetPath: requireOption(options, "packet"),
           entrySnapshotId: options["entry-snapshot"] ?? null,
           apply: options.apply === true,
+          expectedReviewSha256: options["expect-review-sha256"] ?? null,
         });
         return options.json === true
           ? imported
@@ -4452,6 +4535,49 @@ export async function runCli(argv = process.argv.slice(2), runtimeHooks = {}) {
           workspaceRoot: root,
           agentId: requireOption(options, "agent"),
         });
+        if (options.candidate !== undefined) {
+          const reviewRoot = realpathSync(root);
+          const pending = takeover.pendingHandoff?.toAgentId === takeover.agentId
+            ? takeover.pendingHandoff : null;
+          const workItemId = pending?.workItemId ?? takeover.currentResponsibility?.workItemId;
+          const workItem = readTeamProjectStatusV5({ workspaceRoot: root }).workItems
+            .find(row => row.workItemId === workItemId);
+          const gate = reviewCandidateForCli(reviewRoot, options.candidate);
+          const declaredCandidates = (pending?.evidenceRefs ?? [])
+            .filter(ref => ref.startsWith(`${RUNTIME_ROOT}/executions/`) && ref.includes("/source-candidates/"));
+          const hasReference = (pending?.evidenceRefs ?? workItem?.evidenceRefs ?? []).includes(gate.candidatePath);
+          const hasExecution = workItem?.executionRunId != null && workItem.executionRunId === gate.review?.runId;
+          if (!workItem || !gate.review?.candidateId
+            || (!hasReference && (!hasExecution || declaredCandidates.length > 0))
+            || gate.review.workItemId !== (workItem.executionWorkItemId ?? workItem.workItemId)
+            || (workItem.executionRunId !== null && workItem.executionRunId !== gate.review.runId)
+            || !gate.review.allowedPaths.every(rule => workItem.ownedPaths.some(owned => (
+              owned === rule || (owned.endsWith("/**")
+                && (rule === owned.slice(0, -3) || rule.startsWith(owned.slice(0, -2))))
+            )))) {
+            throw new Error("The frozen candidate does not bind the takeover work item and its current scope.");
+          }
+          const quick = reviewTakeoverQuickReceipt(reviewRoot, workItem.boundVerificationReceipt);
+          const reviewExitCode = gate.review.status === "compared" ? gate.exitCode : 2;
+          const nextAction = reviewExitCode === 0 ? takeover.nextAction
+            : gate.review.nextAction === "freeze_fresh_candidate" ? "Freeze a fresh candidate before handoff."
+              : "Inspect the candidate review before continuing the handoff.";
+          const reviewed = {
+            ...takeover, nextAction, candidateReview: gate, quickVerification: quick, exitCode: reviewExitCode,
+          };
+          return options.json === true ? reviewed : withHumanOutput(
+            reviewed, [
+              formatTeamProjectTakeoverHumanV2(reviewed),
+              formatCandidateReviewHuman(gate),
+              ...(quick ? [
+                `Quick workspace evidence: ${quick.status}`,
+                `Receipt: ${JSON.stringify(quick.receiptRef)}`,
+                ...(quick.argv ? [`  ${JSON.stringify(quick.argv)}`] : []),
+                "",
+              ] : []),
+            ].join("\n"),
+          );
+        }
         return options.json === true
           ? takeover
           : withHumanOutput(takeover, formatTeamProjectTakeoverHumanV2(takeover));

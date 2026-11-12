@@ -44,6 +44,11 @@
   "supportedProducerCoreIdentities": [
     {
       "contractVersion": "0.2",
+      "coreVersion": "0.25.5",
+      "coreManifestSha256": "sha256:6f88a83d033b8c57eaa6150d77388b816c3003f2f8cac773f3a957796d4a9ea0"
+    },
+    {
+      "contractVersion": "0.2",
       "coreVersion": "0.25.4",
       "coreManifestSha256": "sha256:56a5ff4e5d84bf2436ef39b2e37a54d8c20236ef393c0c9dc54266b1e6dc6465"
     },

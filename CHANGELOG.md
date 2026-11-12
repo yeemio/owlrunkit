@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.25.5
+
+- Publishes OwlRunKit under the MIT License.
+- Reviews changed allowed paths since freeze and reports Git baseline drift
+  separately. Candidate review shows exact Formal evidence and its scope.
+- Shows candidate review and bound Quick evidence in the takeover CLI.
+- Lets an external import require the digest of its reviewed preview.
+
 ## 0.25.4
 
 - Accepts a writable workspace on the same Linux OverlayFS as the read-only
