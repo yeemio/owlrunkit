@@ -81,7 +81,7 @@ RunKit **不负责**：
 
 ## 当前版本
 
-本文对应 `owlrunkit@0.25.3`，主要公开能力包括：
+本文对应 `owlrunkit@0.25.4`，主要公开能力包括：
 
 - Project Driver 和类型化交付生命周期；
 - Quick / Formal 验证及源码绑定回执；
@@ -124,7 +124,7 @@ Codex 0.162.0-alpha.2 原生探针已使用离线响应源验证，没有调用�
 请在项目中精确锁定版本，并始终使用项目本地 CLI：
 
 ```bash
-npm install --save-exact owlrunkit@0.25.3
+npm install --save-exact owlrunkit@0.25.4
 npx --no-install owlrunkit --version
 ```
 
@@ -132,9 +132,9 @@ npx --no-install owlrunkit --version
 
 ```bash
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.25.3 --dry-run
+  --exact owlrunkit@0.25.4 --dry-run
 npx --no-install owlrunkit bootstrap --workspace "$PWD" \
-  --exact owlrunkit@0.25.3 --apply
+  --exact owlrunkit@0.25.4 --apply
 npx --no-install owlrunkit doctor --workspace "$PWD"
 npx --no-install owlrunkit mode recommend --workspace "$PWD"
 ```

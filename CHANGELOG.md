@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.25.4
+
+- Accepts a writable workspace on the same Linux OverlayFS as the read-only
+  system mount when their mount roots are disjoint. RunKit rejects writable
+  mounts that overlap the protected system tree.
+
 ## 0.25.3
 
 - Accepts Bubblewrap on a verified read-only Linux system mount when the

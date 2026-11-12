@@ -136,7 +136,7 @@ separate authority boundaries.
 
 ## Current release
 
-`owlrunkit@0.25.3` is the version documented here. Its public surfaces
+`owlrunkit@0.25.4` is the version documented here. Its public surfaces
 include:
 
 - Project Driver and typed delivery lifecycle;
@@ -156,7 +156,7 @@ public source tag.
 
 ## Install
 
-This package is the lifecycle-stable, registry-gated `owlrunkit@0.25.3`
+This package is the lifecycle-stable, registry-gated `owlrunkit@0.25.4`
 artifact. Registry adoption remains fail-closed until its exact official npm
 version, shasum, integrity, and tarball URL are independently verified. Local
 tarballs remain candidate-test inputs and are never adoption provenance. Until
@@ -164,7 +164,7 @@ that registry evidence exists, use the package only for isolated candidate
 verification; do not treat the command below as available release truth.
 
 ```bash
-npm install --save-exact owlrunkit@0.25.3
+npm install --save-exact owlrunkit@0.25.4
 ```
 
 Use `npx --no-install owlrunkit` for project commands. The package bootstrap
@@ -180,9 +180,9 @@ the project Config must independently bind the same Core.
 ```bash
 npx --no-install owlrunkit --version
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.25.3 --dry-run
+  --exact owlrunkit@0.25.4 --dry-run
 npx --no-install owlrunkit bootstrap --workspace /absolute/path/to/project \
-  --exact owlrunkit@0.25.3 --apply
+  --exact owlrunkit@0.25.4 --apply
 npx --no-install owlrunkit init --workspace /absolute/path/to/project
 npx --no-install owlrunkit doctor --workspace /absolute/path/to/project
 npx --no-install owlrunkit inspect --workspace /absolute/path/to/project --json --compact

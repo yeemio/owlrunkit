@@ -2,7 +2,7 @@
   "schemaVersion": "OwlCodaRunKitRegistryReleasePolicyV2",
   "status": "release_artifact_registry_gated",
   "packageName": "owlrunkit",
-  "artifactVersion": "0.25.3",
+  "artifactVersion": "0.25.4",
   "registry": "https://registry.npmjs.org",
   "registryRequiredBeforeAdoption": true,
   "exactVersionRequired": true,
@@ -23,10 +23,10 @@
   ],
   "rollbackRelease": {
     "packageName": "owlrunkit",
-    "version": "0.25.2",
-    "shasum": "0b4bc23778549cdd3537f2e78d55302b34237ded",
-    "integrity": "sha512-a7EJwkR/3o0Pjuz2dxEKkbB6n7WowLloKtYuuyjfXGfZM3D6/IVphdRLBv7oh/lJPk511e/i0XGUfFxt+OhXzA==",
-    "tarballUrl": "https://registry.npmjs.org/owlrunkit/-/owlrunkit-0.25.2.tgz"
+    "version": "0.25.3",
+    "shasum": "7e33016bd0e86a245993d3820c6c8ed57c974673",
+    "integrity": "sha512-+JnvgeT6mrWoWzsdKyouT8gBAAsdO1xu8tsdSu7cW/YdY3wVATzqTK0JxJ01apBh9UmHyk7JEgrZW5mszz0EpQ==",
+    "tarballUrl": "https://registry.npmjs.org/owlrunkit/-/owlrunkit-0.25.3.tgz"
   },
   "registryEvidenceMustBeExternal": true,
   "registryEvidenceSchemaVersion": "OwlCodaRunKitRegistryReleaseEvidenceV1",

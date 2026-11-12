@@ -43,15 +43,24 @@ export function readOnlySystemBubblewrapIssue({ uid, uidMap, root, systemDirecto
 
   const mounts = mountInfo.trim().split("\n").map(line => {
     const [description, filesystem] = line.split(" - ");
-    const [id, , device, , target, flags] = description.split(" ");
-    return { id, device, target, flags: flags?.split(",") ?? [], type: filesystem?.split(" ")[0] };
+    const [id, , device, root, target, flags] = description.split(" ");
+    return { id, device, root, target, flags: flags?.split(",") ?? [], type: filesystem?.split(" ")[0] };
   });
   const system = mounts.find(mount => mount.id === mountId);
-  if (system?.target !== "/usr" || system.type !== "overlay"
+  if (system?.target !== "/usr" || system.type !== "overlay" || !system.root?.startsWith("/")
     || !["ro", "nosuid", "nodev"].every(flag => system.flags.includes(flag))) {
     return "the opened executable is not on the protected read-only /usr mount";
   }
-  if (mounts.some(mount => mount.device === system.device && mount.flags.includes("rw"))) {
+
+  // Mount roots use paths within the same filesystem. A writable mount
+  // exposes the protected tree only when their roots overlap.
+  const systemPrefix = system.root === "/" ? "/" : `${system.root}/`;
+  if (mounts.some(mount => {
+    if (mount.device !== system.device || !mount.flags.includes("rw")) return false;
+    if (!mount.root?.startsWith("/")) return true;
+    const prefix = mount.root === "/" ? "/" : `${mount.root}/`;
+    return prefix.startsWith(systemPrefix) || systemPrefix.startsWith(prefix);
+  })) {
     return "the /usr mount has a writable alias";
   }
   return null;
