@@ -3,7 +3,9 @@
 [English](README.md) · **中文** · [使用指南（英文）](docs/guide.md) · [发布记录](https://github.com/yeemio/owlrunkit/releases)
 
 [![npm](https://img.shields.io/npm/v/owlrunkit)](https://www.npmjs.com/package/owlrunkit)
-[![GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+**欢迎交流。** 有使用反馈、想法或合作建议，可以在 X 上找到我 [@yeemio](https://x.com/yeemio)。
 
 OwlRunKit 是面向 AI 代理的本地项目协调工具。它把目标、责任人、源码候选、检查点和验证回执保存在项目里，让下一位代理接手时能看清做到哪里、依据是什么、下一步该做什么。
 

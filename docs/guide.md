@@ -19,8 +19,8 @@ include:
 
 This repository is the public corresponding-source, documentation, issue,
 release, and trust surface for OwlRunKit. Day-to-day development remains in a
-private source repository; every GPL-covered npm release must map to an exact
-public source tag.
+private source repository. Each npm release maps to its exact public source
+tag and the license included in that release.
 
 ## Install
 
@@ -982,7 +982,8 @@ npm version is independent from the `owlcoda` CLI version.
 
 ## License
 
-GPL-3.0-or-later. See [LICENSE](../LICENSE) and [NOTICE.md](../NOTICE.md).
+The default branch is available under the [MIT License](../LICENSE). See
+[NOTICE.md](../NOTICE.md) for component notices and earlier release terms.
 
 ## Selected release history
 

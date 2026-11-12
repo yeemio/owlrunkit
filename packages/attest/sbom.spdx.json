@@ -18,7 +18,7 @@
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "GPL-3.0-or-later",
+      "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
       "supplier": "Organization: OwlCoda"
     }

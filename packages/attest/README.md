@@ -66,7 +66,7 @@ in the repository documentation under
 `docs/architecture/runkit-attestation-v1/`. Rollback preserves historical
 receipts but does not require N-1 to trust an unknown future Core identity.
 
-The packed candidate includes its GPL-3.0-or-later license, a package-level
+The attestation source in this repository includes its MIT license, a package-level
 SPDX 2.3 SBOM, the frozen Consumer Surface V1 manifest, and the additive V2
 surface. Local metrics never
 send telemetry and are not a performance target. They describe local receipt

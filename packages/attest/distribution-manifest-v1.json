@@ -34,12 +34,12 @@
   },
   "sbom": {
     "path": "sbom.spdx.json",
-    "sha256": "sha256:8346b0d642224f78319da8ac7016f7b41f9807240304a80bbd1d9c89663a2eeb"
+    "sha256": "sha256:a5c25c5f79b037196aa573d7088cf1e99a8913431bdb7c46479938c727fd09d3"
   },
   "license": {
     "path": "LICENSE",
-    "spdx": "GPL-3.0-or-later",
-    "sha256": "sha256:3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    "spdx": "MIT",
+    "sha256": "sha256:2e44185040937d916f1f94740fe930c24ae0c71529784948f5660fe4b788e6b4"
   },
   "supportedProducerCoreIdentities": [
     {

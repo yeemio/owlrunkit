@@ -3,7 +3,9 @@
 **English** · [中文](README.zh.md) · [Usage guide](docs/guide.md) · [Releases](https://github.com/yeemio/owlrunkit/releases)
 
 [![npm](https://img.shields.io/npm/v/owlrunkit)](https://www.npmjs.com/package/owlrunkit)
-[![GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+**Questions, feedback, or ideas?** Find me on X at [@yeemio](https://x.com/yeemio).
 
 OwlRunKit is a local-first project driver for AI agents. It keeps goals, owners,
 source candidates, checkpoints, and verification receipts in the project so

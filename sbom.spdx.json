@@ -17,8 +17,8 @@
       "versionInfo": "0.25.4",
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
-      "licenseConcluded": "GPL-3.0-or-later",
-      "licenseDeclared": "GPL-3.0-or-later",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
       "externalRefs": [
         {

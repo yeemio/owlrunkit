@@ -52,5 +52,5 @@ weaken fail-closed behavior merely to make a test green.
 
 ## License
 
-OwlRunKit is distributed under `GPL-3.0-or-later`. Commercial, OEM, or embedded
-distribution uses a separate maintainer license path.
+OwlRunKit source is available under the [MIT License](LICENSE). See [NOTICE.md](NOTICE.md)
+for component notices and the licenses of earlier releases.

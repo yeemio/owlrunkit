@@ -1,7 +1,8 @@
 # Corresponding source
 
-OwlRunKit is distributed under GPL-3.0-or-later. The corresponding public
-source is [OwlRunKit v0.25.4](https://github.com/yeemio/owlrunkit/tree/v0.25.4).
+Source on the default branch is available under the [MIT License](LICENSE).
+The published `owlrunkit@0.25.4` npm package carries GPL-3.0-or-later and
+maps to [the v0.25.4 source tag](https://github.com/yeemio/owlrunkit/tree/v0.25.4).
 The npm package includes the JavaScript runtime, read-only verifier, C source,
 and [Linux helper build script](packages/runkit/build-linux-helper.sh).
 The distributed helpers statically link musl and include its copyright notice.
