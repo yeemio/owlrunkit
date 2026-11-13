@@ -7,9 +7,37 @@
 
 **Questions, feedback, or ideas?** Find me on X at [@yeemio](https://x.com/yeemio).
 
-OwlRunKit is a local-first project driver for AI agents. It keeps goals, owners,
-source candidates, checkpoints, and verification receipts in the project so
-another agent can pick up the work with its context and evidence intact.
+**When an agent stalls or crashes, the next agent can pick up from the last
+accepted checkpoint.** OwlRunKit is a local-first project driver for AI agents.
+It stores ownership, checkpoints, frozen source candidates, and verification
+receipts alongside the project.
+
+- **Confine the worker.** The operating system confines each managed attempt
+  to a private directory. If RunKit cannot establish isolation, it refuses to start.
+- **Recover without two writers.** A designated peer checks whether the worker
+  can still make progress. If the worker has exited or wake remains unconfirmed,
+  RunKit transfers ownership to a new generation and rejects late reports.
+- **Hand off proof with the code.** A successor can see what was verified, which
+  allowed files changed after the freeze, and whether to take a fresh snapshot.
+
+## Watch a real Codex crash and takeover
+
+![Terminal replay of two real Codex sessions. The first worker is killed during a write. The successor loads the accepted checkpoint, finishes the edit, and passes all five tests.](docs/images/codex-takeover.gif)
+
+Codex A wrote an initial implementation and saved a checkpoint with 1 of 5
+tests passing. The test harness sent `SIGKILL` to the managed worker during
+its next write and terminated the first Codex session. Codex B inspected the
+recorded exit, determined that the worker could no longer wake, claimed
+generation 2, and continued from the same checkpoint. It finished the edit
+and passed **5 of 5 tests** inside its own isolated attempt. The original
+workspace stayed intact.
+
+This 15-second replay uses the actual run events with pauses shortened.
+The run used the published OwlRunKit `0.25.5`, two independent GPT‑6.1 Sol
+Codex sessions, and a synthetic fixture on macOS ARM64. A test adapter
+connected Codex to the managed file and test operations. The Codex host
+handled model requests outside the isolated worker.
+[Run events and original timestamps](docs/images/codex-takeover-events.json)
 
 ## Architecture
 
@@ -28,7 +56,7 @@ ownership, checks the expected state before changes, and binds the outcome
 to its evidence. The operating system enforces the worker's isolation.
 Git, publication, and deployment each require their own authority.
 
-## Wake or take over
+## Wake the worker or let its peer take over
 
 ![A designated peer inspects the task and requests recovery. A matching new checkpoint keeps the current agent in charge. An exit or an unconfirmed wake can allow the designated peer to take over.](docs/images/recovery-en.png)
 
@@ -38,12 +66,14 @@ Git, publication, and deployment each require their own authority.
    and revision with `peer inspect`, then requests recovery. RunKit challenges
    a running worker with a wake ID. The worker proves progress by submitting a
    changed checkpoint with that ID. An ACK alone leaves the wake unconfirmed.
+   The checkpoint can contain code or any of the declared task files.
 3. **Claim the next generation.** If the worker has exited or the bounded wake
    attempt ends without confirmed progress, RunKit can record the designated peer
    as the owner at a new generation. A single durable revision binds the handoff to
    the last accepted checkpoint. Stale claims and late checkpoint reports are
    rejected. The peer may supply its worker command to `peer recover` and start
-   the successor attempt in the same request.
+   the successor attempt in the same request. The host provides the trigger
+   and the cooperating agent decides when to request recovery.
 
 [Peer commands and worker protocol](docs/guide.md#managed-local-peer-recovery)
 
@@ -53,7 +83,10 @@ Each worker starts in a fresh directory seeded from the last accepted
 checkpoint. It can write there and report the declared files back to RunKit.
 The original workspace stays intact, and the backend blocks network access
 and new subprocesses. A timed-out worker can remain alive in its old
-directory. RunKit accepts checkpoint reports only from the current attempt.
+directory. It has no write access to the successor's attempt, and RunKit
+accepts checkpoint reports only from the current attempt. The checkpoint
+covers the declared files, so unfinished writes after it stay in the old
+attempt directory.
 
 | Platform | Managed worker backend |
 | --- | --- |
@@ -63,11 +96,16 @@ directory. RunKit accepts checkpoint reports only from the current attempt.
 RunKit refuses managed execution when it cannot establish isolation. On Linux
 with remapped system ownership, the Bubblewrap fallback checks the read-only
 `/usr` mount and rejects writable aliases whose mount roots overlap it.
-Disjoint writable subtrees on the same OverlayFS are supported in `0.25.4`.
+Disjoint writable subtrees on the same OverlayFS are supported since `0.25.4`.
+The package ships SHA-256 checksums for both Linux helpers and an SPDX software
+bill of materials.
 
 The `0.25.4` npm package passed a controlled worker crash test on a Linux
 x86-64 cloud host using this layout. The successor resumed from the
-checkpoint, completed the task, and preserved the workspace.
+checkpoint, completed the task, and preserved the workspace. The same run
+covered a wake acknowledged without progress, a single successor winning
+takeover, rejection of late writes, and termination of the worker after the
+Linux supervisor was killed.
 [Release v0.25.4](https://github.com/yeemio/owlrunkit/releases/tag/v0.25.4)
 
 ## Review a frozen candidate before handoff
@@ -96,7 +134,8 @@ record to complete the next read-only task in a temporary repository.
 - **Session continuity.** A compact recovery view helps a consumer recover the
   same goal after compaction. An optional Codex Stop hook can continue a session
   that is still waiting when its bound RunKit files change. Managed peer
-  recovery applies to explicitly configured worker processes.
+  recovery covers explicitly configured workers that implement the checkpoint
+  protocol. An ended Desktop turn requires a host-provided wake entry point.
 
 [Project Driver](docs/guide.md#project-driver-coordinate-a-multi-agent-project) ·
 [Verification modes](docs/guide.md#choose-auto-off-light-managed-or-formal) ·

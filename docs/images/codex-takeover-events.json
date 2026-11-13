@@ -1,0 +1,106 @@
+{
+  "owlrunkit": "0.25.5",
+  "codexCli": "0.166.0",
+  "platform": "macOS arm64",
+  "fixture": "ASCII slug conversion",
+  "events": [
+    {
+      "event": "worker_started",
+      "agent": "alpha",
+      "generation": 1,
+      "backend": "macos_sandbox_exec_v1",
+      "elapsedMs": 250
+    },
+    {
+      "event": "codex_session_started",
+      "agent": "alpha",
+      "model": "gpt-6.1-sol",
+      "provider": "openai",
+      "elapsedMs": 300
+    },
+    {
+      "event": "alpha_tests",
+      "passed": 1,
+      "total": 5,
+      "elapsedMs": 8897
+    },
+    {
+      "event": "checkpoint_accepted",
+      "generation": 1,
+      "revision": 3,
+      "sha256": "sha256:82f90ae97c8d71ebd8176671b1b6997edb6c963633a4a1d6d6479216be332de6",
+      "elapsedMs": 9029
+    },
+    {
+      "event": "write_in_progress",
+      "agent": "alpha",
+      "bytesWritten": 55,
+      "checkpointRevision": 3,
+      "processDepth": 2,
+      "elapsedMs": 9161
+    },
+    {
+      "event": "worker_killed",
+      "agent": "alpha",
+      "signal": "SIGKILL",
+      "generation": 1,
+      "revision": 4,
+      "checkpointSha256": "sha256:82f90ae97c8d71ebd8176671b1b6997edb6c963633a4a1d6d6479216be332de6",
+      "elapsedMs": 9275
+    },
+    {
+      "event": "codex_session_terminated",
+      "agent": "alpha",
+      "signal": "SIGKILL",
+      "elapsedMs": 9278
+    },
+    {
+      "event": "codex_session_started",
+      "agent": "bravo",
+      "model": "gpt-6.1-sol",
+      "provider": "openai",
+      "elapsedMs": 9326
+    },
+    {
+      "event": "peer_decision",
+      "agent": "bravo",
+      "wakeable": false,
+      "basis": "SIGKILL",
+      "elapsedMs": 18636
+    },
+    {
+      "event": "takeover",
+      "owner": "bravo",
+      "generation": 2,
+      "priorGeneration": 1,
+      "checkpointSha256": "sha256:82f90ae97c8d71ebd8176671b1b6997edb6c963633a4a1d6d6479216be332de6",
+      "elapsedMs": 18893
+    },
+    {
+      "event": "checkpoint_loaded",
+      "agent": "bravo",
+      "sourceSha256": "a5af4a2a54af73345f2c505fb423af9e49a84fa67828a98476036e40ae99eab0",
+      "elapsedMs": 18926
+    },
+    {
+      "event": "bravo_tests",
+      "passed": 5,
+      "total": 5,
+      "elapsedMs": 22385
+    },
+    {
+      "event": "completed",
+      "owner": "bravo",
+      "generation": 2,
+      "workspacePreserved": true,
+      "tests": 5,
+      "checkpointSha256": "sha256:39a690d9e5c500ff06932205a16485e349c1fb6d062db8d5b54824b621661f79",
+      "elapsedMs": 26336
+    },
+    {
+      "event": "acceptance_passed",
+      "codexSessions": 2,
+      "elapsedMs": 30026
+    }
+  ]
+}
